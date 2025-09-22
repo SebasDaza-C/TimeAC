@@ -19,7 +19,7 @@ export function ViewHorarios({ jornada, bloques, currentBlock }: Props) {
         <div className="glass-card schedule-card">
             <h2 key={jornada.id} className="jornada-title">Horario</h2>
             <ul className="jornada-list">
-                {bloques.map((bloque, index) => (
+                {bloques.map((bloque) => (
                     <li
                         key={bloque.id}
                         className={`jornada-item ${currentBlock?.block.id === bloque.id ? 'active' : ''}`}>
