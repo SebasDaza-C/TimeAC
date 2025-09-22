@@ -26,7 +26,7 @@ export function ViewHorarios({ jornada, bloques, currentBlock }: Props) {
                         <div className="jornada-item-content">
                             <div className="jornada-item-header">
                                 <span className="block-name">{bloque.nombre}</span>
-                                <span className="block-number-display">#{index + 1}</span>
+                                <span className="block-number-display">{bloque.alias}</span>
                             </div>
                             <div className="block-details">
                                 <span className="block-time">{bloque.inicio} - {bloque.fin}</span>

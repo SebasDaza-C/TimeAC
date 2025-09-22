@@ -162,7 +162,7 @@ function App() {
     
     const getBlockNumber = () => {
         if (currentBlock) {
-            return currentBlock.index + 1;
+            return currentBlock.block.alias;
         }
 
         // If no current block, check if it's "fin de jornada"
@@ -177,7 +177,7 @@ function App() {
             }
         }
 
-        return '0'; // Default if no block and not fin de jornada
+        return ''; // Default if no block and not fin de jornada
     }
 
     return (
