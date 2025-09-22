@@ -1,1 +1,352 @@
-@import "tailwindcss";
+:root {
+  --main-red: #e53935;
+  --main-white: #f5f5f5;
+  --main-black: #121212;
+  --glass-bg: rgba(30, 30, 30, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --item-glass-bg: rgba(255, 255, 255, 0.05);
+  --item-glass-border: rgba(255, 255, 255, 0.08);
+  --active-red-bg: rgba(229, 57, 53, 0.3);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    height: 100%;
+}
+
+body {
+  background-color: var(--main-black);
+  color: var(--main-white);
+  font-family: 'Outfit', sans-serif;
+  margin: 0;
+  padding: 20px;
+  height: 100%;
+  text-align: center;
+}
+
+#root, .app-container {
+  width: 100%;
+  height: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.header {
+  margin-bottom: 1rem; /* Reduced margin */
+  flex-shrink: 0; /* Prevent header from shrinking */
+}
+
+.header-title {
+  color: var(--main-red);
+  font-weight: 700;
+  font-size: 2rem;
+  margin: 0;
+}
+
+.header-subtitle {
+  color: var(--main-white);
+  font-weight: 700;
+  font-size: 3.5rem;
+  margin: 0;
+  letter-spacing: 1px;
+}
+
+/* Grid Layout */
+.grid-container {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 20px;
+  width: 100%;
+  flex-grow: 1; /* Allow grid to fill available space */
+  min-height: 0; /* Prevent flexbox overflow */
+  align-items: start; /* Prevent items from stretching vertically */
+}
+
+/* Glassmorphism Card Style */
+.glass-card {
+  background: var(--glass-bg);
+  border-radius: 20px;
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 1.5rem;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Left Card: Clock and Digit */
+.clock-card {
+  justify-content: center;
+  align-items: center;
+}
+
+.block-number {
+  font-size: 10rem;
+  color: var(--main-red);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.clock {
+  font-size: 3.5rem; /* Further reduced font size */
+  font-weight: 500;
+  color: var(--main-white);
+}
+
+/* Jornada Display Inside Clock Card */
+.current-jornada-display {
+    margin-top: 1rem;
+    font-size: 1.2rem;
+    font-weight: 500;
+    color: var(--main-red);
+    background: rgba(229, 57, 53, 0.1);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+}
+
+/* Right Card: Schedule */
+.schedule-card {
+  /* overflow-y is removed from here to prevent clipping on hover */
+  height: 100%; /* Make it fill the grid cell height */
+}
+
+.jornada-title {
+  font-size: 1.8rem;
+  color: var(--main-red);
+  margin-top: 0;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid var(--main-red);
+  padding-bottom: 0.8rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.jornada-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto; /* Scroll within the list */
+  overflow-x: hidden; /* Prevent horizontal scroll/growth */
+  flex-grow: 1;
+  padding-right: 5px; /* Give a little space for the scrollbar */
+}
+
+/* Glass Jornada Item */
+.jornada-item {
+  background: var(--item-glass-bg);
+  border: 1px solid var(--item-glass-border);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  margin-bottom: 0.8rem;
+  padding: 1rem;
+  border-radius: 15px;
+  font-size: 1.2rem;
+  text-align: left;
+  transition: all 0.2s ease-in-out;
+  transform-origin: left center; /* Scale from the left */
+}
+
+.jornada-item:hover {
+  background: rgba(255, 255, 255, 0.1); /* Nuevo color de fondo sutil */
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Active Glass Jornada Item */
+.jornada-item.active {
+  background: var(--active-red-bg);
+  border-color: rgba(229, 57, 53, 0.8);
+  color: var(--main-white);
+  font-weight: 700;
+  transform: scale(1.03);
+}
+
+
+/* General Button Styling */
+button {
+    font-family: 'Outfit', sans-serif;
+    background-color: var(--main-red);
+    color: var(--main-white);
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: #ff7961;
+}
+
+.config-button {
+  position: absolute;
+  top: 25px;
+  right: 25px;
+}
+
+/* Configuration Modal */
+.config-view {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+  backdrop-filter: blur(5px);
+}
+
+.config-content {
+  background-color: #1e1e1e;
+  padding: 2.5rem;
+  border-radius: 15px;
+  border: 1px solid var(--glass-border);
+  width: 90%;
+  max-width: 700px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.config-content h2 {
+  color: var(--main-red);
+  font-weight: 700;
+  margin-top: 0;
+}
+
+.config-section {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.config-section:last-of-type {
+    border-bottom: none;
+}
+
+.config-content label {
+  display: block;
+  margin-top: 1.2rem;
+  font-weight: 500;
+  text-align: left;
+}
+
+.config-content input,
+.config-content select {
+  width: 100%;
+  padding: 0.8rem;
+  margin-top: 0.6rem;
+  border-radius: 8px;
+  border: 1px solid var(--glass-border);
+  background-color: #333;
+  color: var(--main-white);
+  font-family: 'Outfit', sans-serif;
+}
+
+.config-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+}
+
+.block-editor {
+    display: grid;
+    grid-template-columns: 1fr 100px 50px;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.danger-button {
+    background-color: #8b0000;
+}
+.danger-button:hover {
+    background-color: #a52a2a;
+}
+
+.close-button {
+    margin-top: 1rem;
+}
+
+/* Custom Scrollbar */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--main-red) var(--main-black);
+}
+
+*::-webkit-scrollbar {
+    width: 10px;
+}
+
+*::-webkit-scrollbar-track {
+    background: var(--main-black);
+}
+
+*::-webkit-scrollbar-thumb {
+    background-color: var(--main-red);
+    border-radius: 10px;
+    border: 2px solid var(--main-black);
+}
+
+/* Estilos para los nuevos elementos de jornada-item */
+.jornada-item-content {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.jornada-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.block-name {
+    font-weight: 600;
+    font-size: 1.3rem;
+    color: var(--main-white);
+}
+
+.block-number-display {
+    font-weight: 500;
+    font-size: 1rem;
+    color: var(--main-red);
+    background: rgba(229, 57, 53, 0.1);
+    padding: 0.2rem 0.6rem;
+    border-radius: 8px;
+}
+
+.block-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.block-time {
+    font-weight: 400;
+}
+
+.block-duration {
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .grid-container {
+    grid-template-columns: 1fr;
+  }
+}
