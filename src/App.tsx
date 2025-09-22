@@ -196,7 +196,7 @@ function App() {
 
             <div className="grid-container">
                 <div className="glass-card clock-card">
-                    <div className="block-number">{getBlockNumber()}</div>
+                    <div key={getBlockNumber()} className="block-number">{getBlockNumber()}</div>
                     <Clock />
                     {activeJornada && (
                         <div className="current-jornada-display">
@@ -221,6 +221,7 @@ function App() {
                     onClose={() => setShowPasswordView(false)}
                     onSubmit={handlePasswordSubmit}
                     error={passwordError}
+                    className={showPasswordView ? 'show' : ''}
                 />
             )}
 
@@ -231,6 +232,7 @@ function App() {
                     allJornadas={allJornadas}
                     setAllJornadas={setAllJornadas}
                     onClose={() => setShowConfig(false)} 
+                    className={showConfig ? 'show' : ''}
                 />
             )}
         </div>

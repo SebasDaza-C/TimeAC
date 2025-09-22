@@ -17,7 +17,7 @@ export function ViewHorarios({ jornada, bloques, currentBlock }: Props) {
 
     return (
         <div className="glass-card schedule-card">
-            <h2 className="jornada-title">Horario</h2>
+            <h2 key={jornada.id} className="jornada-title">Horario</h2>
             <ul className="jornada-list">
                 {bloques.map((bloque, index) => (
                     <li

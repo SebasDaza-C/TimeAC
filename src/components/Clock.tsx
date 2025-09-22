@@ -19,5 +19,5 @@ export function Clock() {
         return () => clearInterval(timerId);
     }, []);
 
-    return <div className="clock">{time}</div>;
+    return <div key={time} className="clock">{time}</div>;
 }

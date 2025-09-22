@@ -4,9 +4,10 @@ interface Props {
     onClose: () => void;
     onSubmit: (password: string) => void;
     error: string;
+    className?: string; // Add className prop
 }
 
-export function PasswordView({ onClose, onSubmit, error }: Props) {
+export function PasswordView({ onClose, onSubmit, error, className }: Props) {
     const [password, setPassword] = useState('');
 
     const handleSubmit = () => {
@@ -14,7 +15,7 @@ export function PasswordView({ onClose, onSubmit, error }: Props) {
     };
 
     return (
-        <div className="config-view">
+        <div className={`config-view ${className || ''}`}> {/* Apply className here */}
             <div className="config-content">
                 <h2>Ingresar Contraseña</h2>
                 {error && <p className="error-message">{error}</p>}

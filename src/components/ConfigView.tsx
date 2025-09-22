@@ -7,9 +7,10 @@ interface Props {
     allJornadas: Jornada[];
     setAllJornadas: (jornadas: Jornada[]) => void;
     onClose: () => void;
+    className?: string; // Add className prop
 }
 
-export function ConfigView({ jornadaSettings, setJornadaSettings, allJornadas, setAllJornadas, onClose }: Props) {
+export function ConfigView({ jornadaSettings, setJornadaSettings, allJornadas, setAllJornadas, onClose, className }: Props) {
     const [selectedJornadaId, setSelectedJornadaId] = useState<number>(allJornadas[0]?.id || 0);
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -99,7 +100,7 @@ export function ConfigView({ jornadaSettings, setJornadaSettings, allJornadas, s
     const selectedJornada = allJornadas.find(j => j.id === selectedJornadaId);
 
     return (
-        <div className="config-view">
+        <div className={`config-view ${className || ''}`}> {/* Apply className here */}
             <div className="config-content">
                 <h2>Configuración</h2>
 
