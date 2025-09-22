@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Clock } from './components/Clock';
 import { ConfigView } from './components/ConfigView';
 import { ViewHorarios } from './components/ViewHorarios';
+import { PasswordView } from './components/PasswordView';
 import type { Jornada, Bloque } from './types';
 
 // --- MOCK DATA ---
@@ -94,6 +95,8 @@ function App() {
     const [processedJornadas, setProcessedJornadas] = useState<Jornada[]>([]);
     const [activeJornada, setActiveJornada] = useState<Jornada | undefined>();
     const [showConfig, setShowConfig] = useState(false);
+    const [showPasswordView, setShowPasswordView] = useState(false);
+    const [passwordError, setPasswordError] = useState('');
     const [currentTime, setCurrentTime] = useState(new Date());
     const [currentBlock, setCurrentBlock] = useState<{ block: Bloque, index: number } | undefined>();
 
@@ -119,7 +122,6 @@ function App() {
             return { ...jornada, bloques: calculatedBloques };
         });
         setProcessedJornadas(calculatedJornadas);
-        console.log("Processed Jornadas:", calculatedJornadas); // Debug log
     }, [allJornadas]);
 
     // Effect to determine the active jornada and current block with its index
@@ -141,7 +143,6 @@ function App() {
 
             if (currentBlockIndex !== -1) {
                 setCurrentBlock({ block: foundJornada.bloques[currentBlockIndex], index: currentBlockIndex });
-                console.log("Current Block (with index):", { block: foundJornada.bloques[currentBlockIndex], index: currentBlockIndex }); // Debug log
             } else {
                 setCurrentBlock(undefined);
             }
@@ -152,11 +153,17 @@ function App() {
     }, [currentTime, jornadaSettings, processedJornadas]);
 
     const handleConfigClick = () => {
-        const password = prompt("Ingrese la contraseña para configurar:");
-        if (password === "1234") {
+        setShowPasswordView(true);
+    };
+
+    const handlePasswordSubmit = (password: string) => {
+        const storedPassword = localStorage.getItem('timeac-password') || '1234';
+        if (password === storedPassword) {
             setShowConfig(true);
+            setShowPasswordView(false);
+            setPasswordError('');
         } else {
-            alert("Contraseña incorrecta.");
+            setPasswordError("Contraseña incorrecta.");
         }
     };
     
@@ -208,6 +215,14 @@ function App() {
             <button className="config-button" onClick={handleConfigClick}>
                 Configurar
             </button>
+
+            {showPasswordView && (
+                <PasswordView 
+                    onClose={() => setShowPasswordView(false)}
+                    onSubmit={handlePasswordSubmit}
+                    error={passwordError}
+                />
+            )}
 
             {showConfig && activeJornada && (
                 <ConfigView 

@@ -22,7 +22,7 @@ export function ViewHorarios({ jornada, bloques, currentBlock }: Props) {
                 {bloques.map((bloque, index) => (
                     <li
                         key={bloque.id}
-                        className={`jornada-item ${currentBlock?.id === bloque.id ? 'active' : ''}`}>
+                        className={`jornada-item ${currentBlock?.block.id === bloque.id ? 'active' : ''}`}>
                         <div className="jornada-item-content">
                             <div className="jornada-item-header">
                                 <span className="block-name">{bloque.nombre}</span>

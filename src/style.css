@@ -164,7 +164,6 @@ body {
   border-color: rgba(229, 57, 53, 0.8);
   color: var(--main-white);
   font-weight: 700;
-  transform: scale(1.03);
 }
 
 
@@ -223,6 +222,11 @@ button:hover {
   margin-top: 0;
 }
 
+.error-message {
+    color: var(--main-red);
+    margin-bottom: 1rem;
+}
+
 .config-section {
     margin-bottom: 2rem;
     padding-bottom: 1rem;
@@ -250,6 +254,13 @@ button:hover {
   background-color: #333;
   color: var(--main-white);
   font-family: 'Outfit', sans-serif;
+  transition: border-color 0.3s, outline 0.3s;
+}
+
+.config-content input:focus,
+.config-content select:focus {
+    outline: 1px solid var(--main-red);
+    border-color: var(--main-red);
 }
 
 .config-controls {
@@ -261,7 +272,7 @@ button:hover {
 
 .block-editor {
     display: grid;
-    grid-template-columns: 1fr 100px 50px;
+    grid-template-columns: 50px 1fr 100px 50px;
     gap: 10px;
     align-items: center;
     margin-bottom: 10px;
@@ -281,21 +292,21 @@ button:hover {
 /* Custom Scrollbar */
 * {
     scrollbar-width: thin;
-    scrollbar-color: var(--main-red) var(--main-black);
+    scrollbar-color: var(--main-red) transparent;
 }
 
 *::-webkit-scrollbar {
-    width: 10px;
+    width: 8px;
+    height: 8px;
 }
 
 *::-webkit-scrollbar-track {
-    background: var(--main-black);
+    background: transparent;
 }
 
 *::-webkit-scrollbar-thumb {
     background-color: var(--main-red);
-    border-radius: 10px;
-    border: 2px solid var(--main-black);
+    border-radius: 4px;
 }
 
 /* Estilos para los nuevos elementos de jornada-item */

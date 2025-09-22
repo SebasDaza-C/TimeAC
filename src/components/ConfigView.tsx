@@ -11,6 +11,9 @@ interface Props {
 
 export function ConfigView({ jornadaSettings, setJornadaSettings, allJornadas, setAllJornadas, onClose }: Props) {
     const [selectedJornadaId, setSelectedJornadaId] = useState<number>(allJornadas[0]?.id || 0);
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [passwordError, setPasswordError] = useState('');
 
     const handleJornadaTypeToggle = (timeOfDay: 'morning' | 'afternoon') => {
         const newType = jornadaSettings[timeOfDay] === 'normal' ? 'especial' : 'normal';
@@ -32,8 +35,7 @@ export function ConfigView({ jornadaSettings, setJornadaSettings, allJornadas, s
             if (j.id === jornadaId) {
                 const newBloques = j.bloques.map(b => {
                     if (b.id === blockId) {
-                        // Ensure inicio and fin are present, even if empty
-                        return { ...b, [field]: field === 'duracion' ? Number(value) : value, inicio: b.inicio || '', fin: b.fin || '' };
+                        return { ...b, [field]: field === 'duracion' ? Number(value) : value };
                     }
                     return b;
                 });
@@ -44,12 +46,19 @@ export function ConfigView({ jornadaSettings, setJornadaSettings, allJornadas, s
         setAllJornadas(newJornadas);
     };
 
+    const handleAliasChange = (jornadaId: number, blockId: number, value: string) => {
+        if (/^[a-zA-Z0-9]?$/.test(value)) {
+            handleBlockChange(jornadaId, blockId, 'alias', value);
+        }
+    };
+
     const handleAddBlock = (jornadaId: number) => {
         const newJornadas = allJornadas.map(j => {
             if (j.id === jornadaId) {
                 const newBlockId = j.bloques.length > 0 ? Math.max(...allJornadas.flatMap(j => j.bloques).map(b => b.id)) + 1 : 1;
                 const newBlock: Bloque = {
                     id: newBlockId,
+                    alias: '',
                     nombre: `Nuevo Bloque ${newBlockId}`,
                     duracion: 10,
                     inicio: '',
@@ -72,12 +81,47 @@ export function ConfigView({ jornadaSettings, setJornadaSettings, allJornadas, s
         setAllJornadas(newJornadas);
     };
 
+    const handlePasswordChange = () => {
+        if (newPassword !== confirmPassword) {
+            setPasswordError("Las contraseñas no coinciden.");
+            return;
+        }
+        if (newPassword.length < 4) {
+            setPasswordError("La contraseña debe tener al menos 4 caracteres.");
+            return;
+        }
+        localStorage.setItem('timeac-password', newPassword);
+        setPasswordError("Contraseña cambiada con éxito.");
+        setNewPassword('');
+        setConfirmPassword('');
+    };
+
     const selectedJornada = allJornadas.find(j => j.id === selectedJornadaId);
 
     return (
         <div className="config-view">
             <div className="config-content">
                 <h2>Configuración</h2>
+
+                <div className="config-section">
+                    <h3>Cambiar Contraseña</h3>
+                    <label htmlFor="new-password">Nueva Contraseña</label>
+                    <input
+                        type="password"
+                        id="new-password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                    />
+                    <label htmlFor="confirm-password">Confirmar Contraseña</label>
+                    <input
+                        type="password"
+                        id="confirm-password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                    />
+                    {passwordError && <p className="error-message">{passwordError}</p>}
+                    <button onClick={handlePasswordChange} style={{ marginTop: '1rem' }}>Cambiar Contraseña</button>
+                </div>
 
                 <div className="config-section">
                     <h3>Activar Jornada Especial</h3>
@@ -121,6 +165,12 @@ export function ConfigView({ jornadaSettings, setJornadaSettings, allJornadas, s
                             </button>
                             {selectedJornada.bloques.map(bloque => (
                                 <div key={bloque.id} className="block-editor">
+                                    <input
+                                        type="text"
+                                        value={bloque.alias}
+                                        onChange={(e) => handleAliasChange(selectedJornada.id, bloque.id, e.target.value)}
+                                        maxLength={1}
+                                    />
                                     <input
                                         type="text"
                                         value={bloque.nombre}
