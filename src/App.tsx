@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { db } from './firebase';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { Clock } from './components/Clock';
 import { ConfigView } from './components/ConfigView';
 import { ViewHorarios } from './components/ViewHorarios';
@@ -31,6 +33,39 @@ function App() {
     useEffect(() => {
         const timerId = setInterval(() => setCurrentTime(new Date()), 1000);
         return () => clearInterval(timerId);
+    }, []);
+
+    // Effect to listen for real-time updates from Firestore
+    useEffect(() => {
+        const { setJornadaSettings, setAllJornadas, initialLoad } = useStore.getState();
+
+        const settingsDocRef = doc(db, "config", "jornadaSettings");
+        const jornadasDocRef = doc(db, "config", "allJornadas");
+
+        const unsubSettings = onSnapshot(settingsDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                setJornadaSettings(docSnap.data() as any);
+            }
+        });
+
+        const unsubJornadas = onSnapshot(jornadasDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                if (data && data.list) {
+                    setAllJornadas(data.list);
+                }
+            } else {
+                // If the document doesn't exist, seed the database
+                console.log("No jornada data found in Firestore, loading initial data...");
+                initialLoad();
+            }
+        });
+
+        // Cleanup listeners on component unmount
+        return () => {
+            unsubSettings();
+            unsubJornadas();
+        };
     }, []);
 
     // Effect to recalculate block times whenever the base jornada data changes

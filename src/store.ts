@@ -1,7 +1,9 @@
 import { create } from 'zustand';
 import type { Jornada } from './types';
+import { doc, setDoc } from 'firebase/firestore';
+import { db } from './firebase'; // Import the db instance from your firebase config
 
-// --- MOCK DATA ---
+// The initial data that will be uploaded to Firestore if it's empty.
 const JORNADAS_DATA: Jornada[] = [
     {
         id: 1,
@@ -67,22 +69,49 @@ const JORNADAS_DATA: Jornada[] = [
             { id: 28, alias: 'd', nombre: 'Descanso', duracion: 30, inicio: '', fin: '' },
             { id: 29, alias: 4, nombre: 'Bloque 4', duracion: 40, inicio: '', fin: '' },
             { id: 30, alias: 5, nombre: 'Bloque 5', duracion: 40, inicio: '', fin: '' },
-            { id: 31, alias: 6, nombre: 'Bloque 6', duracion: 35, inicio: '', fin: '' }, // Reordered
-            { id: 32, alias: 7, nombre: 'Direccion de Grupo', duracion: 35, inicio: '', fin: '' }, // Reordered
+            { id: 31, alias: 6, nombre: 'Bloque 6', duracion: 35, inicio: '', fin: '' },
+            { id: 32, alias: 7, nombre: 'Direccion de Grupo', duracion: 35, inicio: '', fin: '' },
         ]
     }
 ];
 
+
 interface AppState {
     jornadaSettings: { morning: 'normal' | 'especial', afternoon: 'normal' | 'especial' };
     allJornadas: Jornada[];
-    setJornadaSettings: (settings: AppState['jornadaSettings']) => void;
-    setAllJornadas: (jornadas: Jornada[]) => void;
+    setJornadaSettings: (settings: AppState['jornadaSettings']) => Promise<void>;
+    setAllJornadas: (jornadas: Jornada[]) => Promise<void>;
+    initialLoad: () => Promise<void>; // Function to seed initial data
 }
 
 export const useStore = create<AppState>((set) => ({
     jornadaSettings: { morning: 'normal', afternoon: 'normal' },
-    allJornadas: JORNADAS_DATA,
-    setJornadaSettings: (settings) => set({ jornadaSettings: settings }),
-    setAllJornadas: (jornadas) => set({ allJornadas: jornadas }),
+    allJornadas: [], // Start with empty data
+    setJornadaSettings: async (settings) => {
+        try {
+            await setDoc(doc(db, "config", "jornadaSettings"), settings);
+            set({ jornadaSettings: settings });
+        } catch (e) {
+            console.error("Error updating jornadaSettings: ", e);
+        }
+    },
+    setAllJornadas: async (jornadas) => {
+        try {
+            // We store the array of jornadas within a single document.
+            await setDoc(doc(db, "config", "allJornadas"), { list: jornadas });
+            set({ allJornadas: jornadas });
+        } catch (e) {
+            console.error("Error updating allJornadas: ", e);
+        }
+    },
+    initialLoad: async () => {
+        // This function can be called once to seed the database with initial data.
+        try {
+            await setDoc(doc(db, "config", "allJornadas"), { list: JORNADAS_DATA });
+            set({ allJornadas: JORNADAS_DATA });
+            console.log("Initial data loaded to Firestore.");
+        } catch (e) {
+            console.error("Error loading initial data: ", e);
+        }
+    }
 }));
