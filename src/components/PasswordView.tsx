@@ -10,7 +10,7 @@ interface Props {
 export function PasswordView({ onClose, onSubmit, error, className }: Props) {
     const [password, setPassword] = useState('');
 
-    const handleSubmit = () => {
+    const HandleSubmit = () => {
         onSubmit(password);
     };
 
@@ -26,11 +26,11 @@ export function PasswordView({ onClose, onSubmit, error, className }: Props) {
                         id="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+                        onKeyDown={(e) => e.key === 'Enter' && HandleSubmit()}
                     />
                 </div>
                 <div className="config-controls">
-                    <button onClick={handleSubmit}>Ingresar</button>
+                    <button onClick={HandleSubmit}>Ingresar</button>
                     <button onClick={onClose} className="danger-button">Cancelar</button>
                 </div>
             </div>

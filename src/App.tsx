@@ -1,20 +1,20 @@
 import { useState, useEffect } from 'react';
-import { db } from './firebase';
+import { db } from './Firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { Clock } from './components/Clock';
 import { ConfigView } from './components/ConfigView';
 import { ViewHorarios } from './components/ViewHorarios';
 import { PasswordView } from './components/PasswordView';
-import type { Jornada, Bloque } from './types';
-import { useStore } from './store';
+import type { Jornada, Bloque } from './Types';
+import { useStore } from './Store';
 
-const timeToMinutes = (time: string) => {
+const TimeToMinutes = (time: string) => {
     if (!time) return 0;
     const [hours, minutes] = time.split(':').map(Number);
     return hours * 60 + minutes;
 };
 
-const minutesToTime = (minutes: number) => {
+const MinutesToTime = (minutes: number) => {
     const hours = Math.floor(minutes / 60).toString().padStart(2, '0');
     const mins = (minutes % 60).toString().padStart(2, '0');
     return `${hours}:${mins}`;
@@ -55,9 +55,10 @@ function App() {
                     setAllJornadas(data.list);
                 }
             } else {
-                // If the document doesn't exist, seed the database
-                console.log("No jornada data found in Firestore, loading initial data...");
-                initialLoad();
+                // If the document doesn't exist, it means there's no data yet or it was deleted.
+                // We don't call initialLoad() here to avoid overwriting user data if they cleared it.
+                // The initialLoad() is now handled in the store itself, only on first app run.
+                console.log("No jornada data found in Firestore. Waiting for user input or initialLoad (if first run).");
             }
         });
 
@@ -71,13 +72,13 @@ function App() {
     // Effect to recalculate block times whenever the base jornada data changes
     useEffect(() => {
         const calculatedJornadas = allJornadas.map(jornada => {
-            let startTime = timeToMinutes(jornada.startTime);
+            let startTime = TimeToMinutes(jornada.startTime);
             const calculatedBloques = jornada.bloques.map(bloque => {
                 const endTime = startTime + bloque.duracion;
                 const newBlock = {
                     ...bloque,
-                    inicio: minutesToTime(startTime),
-                    fin: minutesToTime(endTime)
+                    inicio: MinutesToTime(startTime),
+                    fin: MinutesToTime(endTime)
                 };
                 startTime = endTime;
                 return newBlock;
@@ -99,8 +100,8 @@ function App() {
         if (foundJornada) {
             const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
             const currentBlockIndex = foundJornada.bloques.findIndex(b => {
-                const startMinutes = timeToMinutes(b.inicio!);
-                const endMinutes = timeToMinutes(b.fin!);
+                const startMinutes = TimeToMinutes(b.inicio!);
+                const endMinutes = TimeToMinutes(b.fin!);
                 return currentMinutes >= startMinutes && currentMinutes < endMinutes;
             });
 
@@ -115,11 +116,17 @@ function App() {
 
     }, [currentTime, jornadaSettings, processedJornadas]);
 
-    const handleConfigClick = () => {
+    console.log({
+        activeJornada,
+        jornadaSettings,
+        processedJornadas
+    });
+
+    const HandleConfigClick = () => {
         setShowPasswordView(true);
     };
 
-    const handlePasswordSubmit = (password: string) => {
+    const HandlePasswordSubmit = (password: string) => {
         const storedPassword = localStorage.getItem('timeac-password') || '1234';
         if (password === storedPassword) {
             setShowConfig(true);
@@ -130,24 +137,11 @@ function App() {
         }
     };
     
-    const getBlockNumber = () => {
+    const GetBlockNumber = () => {
         if (currentBlock) {
             return currentBlock.block.alias;
         }
-
-        // If no current block, check if it's "fin de jornada"
-        if (activeJornada) {
-            const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
-            const lastBlock = activeJornada.bloques[activeJornada.bloques.length - 1];
-            if (lastBlock) {
-                const lastBlockEndMinutes = timeToMinutes(lastBlock.fin!);
-                if (currentMinutes >= lastBlockEndMinutes) {
-                    return 'f'; // Fin de jornada
-                }
-            }
-        }
-
-        return ''; // Default if no block and not fin de jornada
+        return 'F'; // If there is no currentBlock, it's "absence of block or absence of jornada"
     }
 
     return (
@@ -159,13 +153,11 @@ function App() {
 
             <div className="grid-container">
                 <div className="glass-card clock-card">
-                    <div key={getBlockNumber()} className="block-number">{getBlockNumber()}</div>
+                    <div key={GetBlockNumber()} className="block-number">{GetBlockNumber()}</div>
                     <Clock />
-                    {activeJornada && (
-                        <div className="current-jornada-display">
-                            {activeJornada.descripcion}
-                        </div>
-                    )}
+                    <div className="current-jornada-display">
+                        {activeJornada ? activeJornada.descripcion : "Jornada no encontrada"}
+                    </div>
                 </div>
 
                 <ViewHorarios 
@@ -175,20 +167,20 @@ function App() {
                 />
             </div>
 
-            <button className="config-button" onClick={handleConfigClick}>
+            <button className="config-button" onClick={HandleConfigClick}>
                 Configurar
             </button>
 
             {showPasswordView && (
                 <PasswordView 
                     onClose={() => setShowPasswordView(false)}
-                    onSubmit={handlePasswordSubmit}
+                    onSubmit={HandlePasswordSubmit}
                     error={passwordError}
                     className={showPasswordView ? 'show' : ''}
                 />
             )}
 
-            {showConfig && activeJornada && (
+            {showConfig && (
                 <ConfigView 
                     jornadaSettings={jornadaSettings}
                     setJornadaSettings={setJornadaSettings}

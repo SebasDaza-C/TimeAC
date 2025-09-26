@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Bloque, Jornada } from '../types'; // Keep Bloque here for Omit type
 
 interface Props {
@@ -16,12 +16,23 @@ export function ConfigView({ jornadaSettings, setJornadaSettings, allJornadas, s
     const [confirmPassword, setConfirmPassword] = useState('');
     const [passwordError, setPasswordError] = useState('');
 
-    const handleJornadaTypeToggle = (timeOfDay: 'morning' | 'afternoon') => {
+    useEffect(() => {
+        // If allJornadas is loaded and the current selectedJornadaId is not valid
+        // (either 0 or not found in the new list), select the first one by default.
+        if (allJornadas.length > 0) {
+            const selectedExists = allJornadas.some(j => j.id === selectedJornadaId);
+            if (!selectedExists) {
+                setSelectedJornadaId(allJornadas[0].id);
+            }
+        }
+    }, [allJornadas, selectedJornadaId]);
+
+    const HandleJornadaTypeToggle = (timeOfDay: 'morning' | 'afternoon') => {
         const newType = jornadaSettings[timeOfDay] === 'normal' ? 'especial' : 'normal';
         setJornadaSettings({ ...jornadaSettings, [timeOfDay]: newType });
     };
 
-    const handleJornadaStartTimeChange = (jornadaId: number, newStartTime: string) => {
+    const HandleJornadaStartTimeChange = (jornadaId: number, newStartTime: string) => {
         const newJornadas = allJornadas.map(j => {
             if (j.id === jornadaId) {
                 return { ...j, startTime: newStartTime };
@@ -31,7 +42,7 @@ export function ConfigView({ jornadaSettings, setJornadaSettings, allJornadas, s
         setAllJornadas(newJornadas);
     };
 
-    const handleBlockChange = (jornadaId: number, blockId: number, field: keyof Omit<Bloque, 'id' | 'inicio' | 'fin'>, value: any) => {
+    const HandleBlockChange = (jornadaId: number, blockId: number, field: keyof Omit<Bloque, 'id' | 'inicio' | 'fin'>, value: any) => {
         const newJornadas = allJornadas.map(j => {
             if (j.id === jornadaId) {
                 const newBloques = j.bloques.map(b => {
@@ -47,13 +58,13 @@ export function ConfigView({ jornadaSettings, setJornadaSettings, allJornadas, s
         setAllJornadas(newJornadas);
     };
 
-    const handleAliasChange = (jornadaId: number, blockId: number, value: string) => {
+    const HandleAliasChange = (jornadaId: number, blockId: number, value: string) => {
         if (/^[a-zA-Z0-9]?$/.test(value)) {
-            handleBlockChange(jornadaId, blockId, 'alias', value);
+            HandleBlockChange(jornadaId, blockId, 'alias', value);
         }
     };
 
-    const handleAddBlock = (jornadaId: number) => {
+    const HandleAddBlock = (jornadaId: number) => {
         const newJornadas = allJornadas.map(j => {
             if (j.id === jornadaId) {
                 const newBlockId = j.bloques.length > 0 ? Math.max(...allJornadas.flatMap(j => j.bloques).map(b => b.id)) + 1 : 1;
@@ -72,7 +83,7 @@ export function ConfigView({ jornadaSettings, setJornadaSettings, allJornadas, s
         setAllJornadas(newJornadas);
     };
 
-    const handleDeleteBlock = (jornadaId: number, blockId: number) => {
+    const HandleDeleteBlock = (jornadaId: number, blockId: number) => {
         const newJornadas = allJornadas.map(j => {
             if (j.id === jornadaId) {
                 return { ...j, bloques: j.bloques.filter(b => b.id !== blockId) };
@@ -82,7 +93,7 @@ export function ConfigView({ jornadaSettings, setJornadaSettings, allJornadas, s
         setAllJornadas(newJornadas);
     };
 
-    const handlePasswordChange = () => {
+    const HandlePasswordChange = () => {
         if (newPassword !== confirmPassword) {
             setPasswordError("Las contraseñas no coinciden.");
             return;
@@ -121,20 +132,20 @@ export function ConfigView({ jornadaSettings, setJornadaSettings, allJornadas, s
                         onChange={(e) => setConfirmPassword(e.target.value)}
                     />
                     {passwordError && <p className="error-message">{passwordError}</p>}
-                    <button onClick={handlePasswordChange} style={{ marginTop: '1rem' }}>Cambiar Contraseña</button>
+                    <button onClick={HandlePasswordChange} style={{ marginTop: '1rem' }}>Cambiar Contraseña</button>
                 </div>
 
                 <div className="config-section">
                     <h3>Activar Jornada Especial</h3>
                     <div className="config-controls">
                         <span>Mañana: <strong>{jornadaSettings.morning.toUpperCase()}</strong></span>
-                        <button onClick={() => handleJornadaTypeToggle('morning')}>
+                        <button onClick={() => HandleJornadaTypeToggle('morning')}>
                             Cambiar a {jornadaSettings.morning === 'normal' ? 'Especial' : 'Normal'}
                         </button>
                     </div>
                     <div className="config-controls">
                         <span>Tarde: <strong>{jornadaSettings.afternoon.toUpperCase()}</strong></span>
-                        <button onClick={() => handleJornadaTypeToggle('afternoon')}>
+                        <button onClick={() => HandleJornadaTypeToggle('afternoon')}>
                             Cambiar a {jornadaSettings.afternoon === 'normal' ? 'Especial' : 'Normal'}
                         </button>
                     </div>
@@ -159,9 +170,9 @@ export function ConfigView({ jornadaSettings, setJornadaSettings, allJornadas, s
                             <input 
                                 type="time" 
                                 value={selectedJornada.startTime}
-                                onChange={(e) => handleJornadaStartTimeChange(selectedJornada.id, e.target.value)}
+                                onChange={(e) => HandleJornadaStartTimeChange(selectedJornada.id, e.target.value)}
                             />
-                             <button onClick={() => handleAddBlock(selectedJornada.id)} style={{ width: '100%', marginTop: '1rem', marginBottom: '1rem' }}>
+                             <button onClick={() => HandleAddBlock(selectedJornada.id)} style={{ width: '100%', marginTop: '1rem', marginBottom: '1rem' }}>
                                 Añadir Bloque a {selectedJornada.descripcion}
                             </button>
                             {selectedJornada.bloques.map(bloque => (
@@ -169,20 +180,20 @@ export function ConfigView({ jornadaSettings, setJornadaSettings, allJornadas, s
                                     <input
                                         type="text"
                                         value={bloque.alias}
-                                        onChange={(e) => handleAliasChange(selectedJornada.id, bloque.id, e.target.value)}
+                                        onChange={(e) => HandleAliasChange(selectedJornada.id, bloque.id, e.target.value)}
                                         maxLength={1}
                                     />
                                     <input
                                         type="text"
                                         value={bloque.nombre}
-                                        onChange={(e) => handleBlockChange(selectedJornada.id, bloque.id, 'nombre', e.target.value)}
+                                        onChange={(e) => HandleBlockChange(selectedJornada.id, bloque.id, 'nombre', e.target.value)}
                                     />
                                     <input
                                         type="number"
                                         value={bloque.duracion}
-                                        onChange={(e) => handleBlockChange(selectedJornada.id, bloque.id, 'duracion', e.target.value)}
+                                        onChange={(e) => HandleBlockChange(selectedJornada.id, bloque.id, 'duracion', e.target.value)}
                                     />
-                                    <button onClick={() => handleDeleteBlock(selectedJornada.id, bloque.id)} className="danger-button">X</button>
+                                    <button onClick={() => HandleDeleteBlock(selectedJornada.id, bloque.id)} className="danger-button">X</button>
                                 </div>
                             ))}
                         </div>

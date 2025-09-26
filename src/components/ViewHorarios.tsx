@@ -10,7 +10,10 @@ export function ViewHorarios({ jornada, bloques, currentBlock }: Props) {
     if (!jornada) {
         return (
             <div className="glass-card schedule-card">
-                <h2 className="jornada-title">Jornada no encontrada</h2>
+                <h2 className="jornada-title">Horario</h2>
+                <div style={{ textAlign: 'center', paddingTop: '20px' }}>
+                    <p>No nos encontramos en jornada</p>
+                </div>
             </div>
         );
     }

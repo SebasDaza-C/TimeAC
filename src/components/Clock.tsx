@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 
-function getCurrentTime() {
+function GetCurrentTime() {
     const now = new Date();
     const hours = now.getHours().toString().padStart(2, '0');
     const minutes = now.getMinutes().toString().padStart(2, '0');
@@ -10,11 +10,11 @@ function getCurrentTime() {
 }
 
 export function Clock() {
-    const [time, setTime] = useState(getCurrentTime());
+    const [time, setTime] = useState(GetCurrentTime());
 
     useEffect(() => {
         const timerId = setInterval(() => {
-            setTime(getCurrentTime());
+            setTime(GetCurrentTime());
         }, 1000);
         return () => clearInterval(timerId);
     }, []);
