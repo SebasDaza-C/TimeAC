@@ -1,0 +1,567 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+
+/* Theme variables */
+:root {
+  --bg: #121212;
+  --card: #1c1c1c;
+  --card-2: #252525;
+  --muted: #9e9e9e;
+  --accent: #e53935;
+  --accent-strong: #b71c1c;
+  --track: #2a2a2a;
+  --thumb: #555;
+  --thumb-hover: rgba(229, 57, 53, 1);
+  --glass: rgba(0, 0, 0, 0.6);
+}
+
+/* General Body Styles */
+body,
+html {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  font-family: 'Outfit', sans-serif;
+  background-color: var(--bg);
+  color: #ffffff;
+  overflow: hidden; /* app uses internal scroll areas */
+}
+
+#root {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+input,
+button,
+select,
+textarea {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* Scrollbar styles (WebKit) and Firefox fallbacks */
+body::-webkit-scrollbar,
+.schedule-card::-webkit-scrollbar,
+.schedule-list::-webkit-scrollbar,
+.jornada-list::-webkit-scrollbar,
+.config-content::-webkit-scrollbar,
+.config-content *::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+body::-webkit-scrollbar-track,
+.schedule-card::-webkit-scrollbar-track,
+.schedule-list::-webkit-scrollbar-track,
+.jornada-list::-webkit-scrollbar-track,
+.config-content::-webkit-scrollbar-track {
+  background: var(--track);
+}
+
+body::-webkit-scrollbar-thumb,
+.schedule-card::-webkit-scrollbar-thumb,
+.schedule-list::-webkit-scrollbar-thumb,
+.jornada-list::-webkit-scrollbar-thumb,
+.config-content::-webkit-scrollbar-thumb {
+  background: var(--thumb);
+  border-radius: 8px;
+  border: 2px solid var(--track);
+}
+
+body::-webkit-scrollbar-thumb:hover,
+.schedule-card::-webkit-scrollbar-thumb:hover,
+.schedule-list::-webkit-scrollbar-thumb:hover,
+.jornada-list::-webkit-scrollbar-thumb:hover,
+.config-content::-webkit-scrollbar-thumb:hover {
+  background: var(--thumb-hover);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--thumb) var(--track);
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 95vh;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.app-header {
+  margin-bottom: 30px;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.app-header h1 {
+  color: #ffffff;
+  font-size: 2.5rem;
+  font-weight: 500;
+  margin: 0;
+  letter-spacing: 2px;
+}
+
+.main-content {
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  gap: 40px;
+  flex-grow: 1;
+  width: 100%;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.clock-container {
+  background: #1c1c1c;
+  border: 1px solid #2a2a2a;
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.schedule-card {
+  background: #1c1c1c;
+  border: 1px solid #2a2a2a;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  overflow-y: auto;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.no-schedule-card {
+  align-items: center;
+  justify-content: center;
+}
+
+.no-schedule-content {
+  text-align: center;
+  color: #a0a0a0;
+}
+
+.no-schedule-icon {
+  font-size: 8rem;
+  color: #e53935;
+  opacity: 0.5;
+  margin-bottom: 1rem;
+}
+
+.block-number {
+  color: #e53935;
+  font-size: 12rem;
+  font-weight: 800;
+  line-height: 1;
+  text-shadow: 0 0 30px rgba(229, 57, 53, 0.5);
+  animation: glow 3s infinite alternate;
+}
+
+@keyframes glow {
+  from {
+    text-shadow: 0 0 20px rgba(229, 57, 53, 0.4);
+  }
+
+  to {
+    text-shadow: 0 0 40px rgba(229, 57, 53, 0.7);
+  }
+}
+
+.clock {
+  font-size: 4.5rem;
+  font-weight: 300;
+  color: #ffffff;
+  letter-spacing: 0.05em;
+  margin: 10px 0;
+}
+
+.schedule-description {
+  margin-top: 16px;
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: #f0f0f0;
+  background: rgba(229, 57, 53, 0.15);
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid #e53935;
+}
+
+.jornada-title {
+  font-size: 1.75rem;
+  font-weight: bold;
+  color: #ffffff;
+  margin-top: 0;
+  margin-bottom: 16px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* English equivalents for components using 'schedule-*' class names */
+.schedule-title {
+  font-size: 1.75rem;
+  font-weight: bold;
+  color: #ffffff;
+  margin-top: 0;
+  margin-bottom: 16px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.schedule-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.schedule-item {
+  background: #252525;
+  border-left: 4px solid #444;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
+}
+
+.schedule-item:hover {
+  background: #333;
+  border-left-color: #666;
+}
+
+.schedule-item.active {
+  background: rgba(229, 57, 53, 0.2);
+  border-left: 4px solid #e53935;
+  box-shadow: 0 0 15px rgba(229, 57, 53, 0.3);
+}
+
+.schedule-item-content {
+  padding: 16px;
+}
+
+.schedule-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.jornada-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.jornada-item {
+  background: #252525;
+  border-left: 4px solid #444;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
+}
+
+.jornada-item:hover {
+  background: #333;
+  border-left-color: #666;
+}
+
+.jornada-item.active {
+  background: rgba(229, 57, 53, 0.2);
+  border-left: 4px solid #e53935;
+  box-shadow: 0 0 15px rgba(229, 57, 53, 0.3);
+}
+
+.jornada-item-content {
+  padding: 16px;
+}
+
+.jornada-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.block-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.block-number-display {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #e53935;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.block-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  color: #9e9e9e;
+}
+
+.config-button {
+  position: absolute;
+  top: 30px;
+  right: 30px;
+  z-index: 10;
+  background: #252525;
+  color: #fff;
+  border: 1px solid #333;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.config-button:hover {
+  background: #e53935;
+  color: #fff;
+  border-color: #e53935;
+  transform: rotate(90deg);
+}
+
+.config-view {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.3s ease,
+    visibility 0.3s ease;
+}
+
+.config-view.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.config-content {
+  background: #1c1c1c;
+  padding: 30px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: 30px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  border: 1px solid #2a2a2a;
+}
+
+.config-content > div:not(.config-footer) {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.config-content h2 {
+  color: #e53935;
+  margin-top: 0;
+  margin-bottom: 25px;
+  text-align: center;
+  font-size: 1.8rem;
+}
+
+.config-section {
+  margin-bottom: 0;
+  padding-bottom: 25px;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.config-section:last-child {
+  border-bottom: none;
+}
+
+.config-section h3 {
+  color: #ffffff;
+  margin-bottom: 15px;
+}
+
+.config-content label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 400;
+  color: #b0b0b0;
+}
+
+.config-content input[type='text'],
+.config-content input[type='password'],
+.config-content input[type='time'],
+.config-content input[type='number'],
+.config-content input[type='number'],
+.config-content select {
+  width: 100%;
+  padding: 12px;
+  background: #2a2a2a;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #e0e0e0;
+  font-size: 1rem;
+  box-sizing: border-box;
+  margin-bottom: 0;
+  transition:
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.config-content input:focus,
+.config-content select:focus {
+  outline: none;
+  border-color: #e53935;
+  box-shadow: 0 0 0 3px rgba(229, 57, 53, 0.25);
+}
+
+.config-content button {
+  background: #e53935;
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background 0.3s ease;
+  margin-top: 0.5rem;
+}
+
+.config-content button:hover {
+  background: #b71c1c;
+}
+
+.config-content .danger-button {
+  background: #555;
+}
+
+.config-content .danger-button:hover {
+  background: #777;
+}
+
+.config-section:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.config-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+/* legacy small-scroll rules consolidated into the root scrollbar rules above */
+
+.error-message {
+  color: #ef5350;
+  margin-top: 10px;
+}
+
+.success-message {
+  color: #66bb6a;
+  margin-top: 10px;
+}
+
+.save-button {
+  background: #e53935 !important;
+}
+
+.save-button:hover {
+  background: #b71c1c !important;
+}
+
+.close-button:hover {
+  background: #4a4a4a !important;
+}
+
+.config-footer {
+  padding-top: 25px;
+  border-top: 1px solid #2a2a2a;
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+.block-editor {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.block-editor input[type='text'][maxlength='1'] {
+  flex: 0 0 40px;
+  text-align: center;
+}
+
+.block-editor input[type='text'] {
+  flex: 1 1 auto;
+}
+
+.block-editor input[type='number'] {
+  flex: 0 0 80px;
+}
+
+.config-section .add-block-button {
+  margin: 1rem 0;
+}
+
+.block-editor-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.block-editor input {
+  margin-bottom: 0;
+}
+
+.icon-button {
+  padding: 10px;
+  font-size: 1.2rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.block-editor button {
+  margin-top: 0;
+}

@@ -1,0 +1,70 @@
+[
+    {
+        "id": 1,
+        "description": "Jornada Mañana Normal",
+        "timeOfDay": "Morning",
+        "type": "Normal",
+        "startTime": "06:30",
+        "blocks": [
+            { "id": 1, "alias": 1, "name": "Bloque 1", "duration": 50, "start": "", "end": "" },
+            { "id": 2, "alias": 2, "name": "Bloque 2", "duration": 50, "start": "", "end": "" },
+            { "id": 3, "alias": 3, "name": "Bloque 3", "duration": 50, "start": "", "end": "" },
+            { "id": 4, "alias": "D", "name": "Descanso", "duration": 30, "start": "", "end": "" },
+            { "id": 5, "alias": 4, "name": "Bloque 4", "duration": 50, "start": "", "end": "" },
+            { "id": 6, "alias": 5, "name": "Bloque 5", "duration": 50, "start": "", "end": "" },
+            { "id": 7, "alias": 6, "name": "Bloque 6", "duration": 50, "start": "", "end": "" },
+            { "id": 8, "alias": 7, "name": "Bloque 7", "duration": 45, "start": "", "end": "" }
+        ]
+    },
+    {
+        "id": 2,
+        "description": "Jornada Mañana Especial",
+        "timeOfDay": "Morning",
+        "type": "Special",
+        "startTime": "06:30",
+        "blocks": [
+            { "id": 9, "alias": "A", "name": "Dirección de Grupo", "duration": 60, "start": "", "end": "" },
+            { "id": 10, "alias": 1, "name": "Bloque 1", "duration": 40, "start": "", "end": "" },
+            { "id": 11, "alias": 2, "name": "Bloque 2", "duration": 40, "start": "", "end": "" },
+            { "id": 12, "alias": 3, "name": "Bloque 3", "duration": 40, "start": "", "end": "" },
+            { "id": 13, "alias": "D", "name": "Descanso", "duration": 30, "start": "", "end": "" },
+            { "id": 14, "alias": 4, "name": "Bloque 4", "duration": 40, "start": "", "end": "" },
+            { "id": 15, "alias": 5, "name": "Bloque 5", "duration": 40, "start": "", "end": "" },
+            { "id": 16, "alias": 6, "name": "Bloque 6", "duration": 40, "start": "", "end": "" },
+            { "id": 17, "alias": 7, "name": "Bloque 7", "duration": 45, "start": "", "end": "" }
+        ]
+    },
+    {
+        "id": 3,
+        "description": "Jornada Tarde Normal",
+        "timeOfDay": "Afternoon",
+        "type": "Normal",
+        "startTime": "13:00",
+        "blocks": [
+            { "id": 18, "alias": 1, "name": "Bloque 1", "duration": 45, "start": "", "end": "" },
+            { "id": 19, "alias": 2, "name": "Bloque 2", "duration": 45, "start": "", "end": "" },
+            { "id": 20, "alias": 3, "name": "Bloque 3", "duration": 45, "start": "", "end": "" },
+            { "id": 21, "alias": "D", "name": "Descanso", "duration": 30, "start": "", "end": "" },
+            { "id": 22, "alias": 4, "name": "Bloque 4", "duration": 45, "start": "", "end": "" },
+            { "id": 23, "alias": 5, "name": "Bloque 5", "duration": 45, "start": "", "end": "" },
+            { "id": 24, "alias": 6, "name": "Bloque 6", "duration": 45, "start": "", "end": "" }
+        ]
+    },
+    {
+        "id": 4,
+        "description": "Jornada Tarde Especial",
+        "timeOfDay": "Afternoon",
+        "type": "Special",
+        "startTime": "13:00",
+        "blocks": [
+            { "id": 25, "alias": 1, "name": "Bloque 1", "duration": 40, "start": "", "end": "" },
+            { "id": 26, "alias": 2, "name": "Bloque 2", "duration": 40, "start": "", "end": "" },
+            { "id": 27, "alias": 3, "name": "Bloque 3", "duration": 40, "start": "", "end": "" },
+            { "id": 28, "alias": "D", "name": "Descanso", "duration": 30, "start": "", "end": "" },
+            { "id": 29, "alias": 4, "name": "Bloque 4", "duration": 40, "start": "", "end": "" },
+            { "id": 30, "alias": 5, "name": "Bloque 5", "duration": 40, "start": "", "end": "" },
+            { "id": 31, "alias": 6, "name": "Bloque 6", "duration": 35, "start": "", "end": "" },
+            { "id": 32, "alias": 7, "name": "Dirección de Grupo", "duration": 35, "start": "", "end": "" }
+        ]
+    }
+]

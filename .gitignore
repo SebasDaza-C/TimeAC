@@ -102,3 +102,5 @@ Thumbs.db
 # Firebase
 .firebase
 firebase-debug.log
+# Service account keys
+timeac-2025-firebase-adminsdk-*.json
