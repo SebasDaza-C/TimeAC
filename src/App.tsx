@@ -6,6 +6,8 @@ import { ViewSchedules } from './components/ViewSchedules';
 import { UseStore } from './Store';
 import { UseSchedules } from './hooks/UseSchedules';
 import type { Schedule, Block } from './Types';
+import { collection, doc, getDocs, writeBatch } from 'firebase/firestore';
+import { Db } from './firebaseClient';
 
 const LOCAL_STORAGE_KEY = 'timeac-schedules';
 
@@ -144,13 +146,59 @@ export default function App() {
   };
 
   const HandleResetSettings = async () => {
+    // This function will reset the entire Firestore 'jornadas' collection
+    // to the state defined in the local `public/Schedules.json`.
+    // NOTE: This client-side implementation requires open write permissions
+    // on the 'jornadas' collection. For production, this logic should be
+    // moved to a secure backend environment (e.g., a Firebase Cloud Function).
+    if (
+      !window.confirm(
+        '¿Estás seguro de que quieres restablecer la base de datos? Esta acción afectará a todos los usuarios.',
+      )
+    ) {
+      return;
+    }
+
+    alert('Restableciendo la base de datos... Esto puede tardar un momento.');
+
     try {
+      // 1. Fetch the source of truth from the public JSON file
       const res = await fetch('/Schedules.json');
-      const data = await res.json();
-      SetAllSchedules(data);
+      if (!res.ok) {
+        throw new Error(`Cannot fetch Schedules.json: ${res.statusText}`);
+      }
+      const newSchedules = await res.json();
+
+      // 2. Get a reference to the collection
+      const collectionRef = collection(Db, 'jornadas');
+
+      // 3. Create a batch to perform atomic operations
+      const batch = writeBatch(Db);
+
+      // 4. Delete all existing documents in the collection
+      const existingDocsSnapshot = await getDocs(collectionRef);
+      existingDocsSnapshot.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+
+      // 5. Add the new documents from the JSON file
+      newSchedules.forEach((schedule: Schedule) => {
+        const docRef = doc(Db, 'jornadas', String(schedule.id));
+        batch.set(docRef, schedule);
+      });
+
+      // 6. Commit the batch
+      await batch.commit();
+
+      // 7. Reset local UI state for settings
       UseStore.setState({ ScheduleSettings: { Morning: 'Normal', Afternoon: 'Normal' } });
-    } catch (e) {
-      /* ignore */
+
+      alert('¡Base de datos restablecida con éxito!');
+    } catch (err) {
+      console.error('Error resetting database:', err);
+      alert(
+        `Error al restablecer la base de datos. Es posible que no tengas los permisos necesarios. Revisa la consola para más detalles.`,
+      );
     }
   };
 
