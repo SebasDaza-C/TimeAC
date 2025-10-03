@@ -6,7 +6,7 @@ import { ViewSchedules } from './components/ViewSchedules';
 import { UseStore } from './Store';
 import { UseSchedules } from './hooks/UseSchedules';
 import type { Schedule, Block } from './Types';
-import { collection, doc, getDocs, writeBatch, setDoc, getDoc } from 'firebase/firestore';
+import { collection, doc, getDocs, writeBatch, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
 import { Db } from './firebaseClient';
 
 const LOCAL_STORAGE_KEY = 'timeac-schedules';
@@ -35,6 +35,7 @@ export default function App() {
   const [ShowConfig, SetShowConfig] = useState(false);
   const [ShowPasswordView, SetShowPasswordView] = useState(false);
   const [PasswordError, SetPasswordError] = useState('');
+  const [RemotePassword, SetRemotePassword] = useState<string | null>(null);
   const [CurrentTime, SetCurrentTime] = useState(new Date());
   const [CurrentBlock, SetCurrentBlock] = useState<{ block: Block; index: number } | undefined>(
     undefined,
@@ -138,6 +139,27 @@ export default function App() {
     const statusRef = doc(Db, 'status', 'display');
     setDoc(statusRef, { currentAlias: alias });
   }, [CurrentBlock]);
+
+  // Listen for password changes in real-time for debug/instant update
+  useEffect(() => {
+    const passwordRef = doc(Db, 'settings', 'password');
+    const unsub = onSnapshot(
+      passwordRef,
+      (snap) => {
+        if (snap.exists()) {
+          const val = (snap.data() as any).value;
+          console.log('[App] settings/password snapshot:', val);
+          SetRemotePassword(val);
+        } else {
+          console.log('[App] settings/password snapshot: document does not exist');
+          SetRemotePassword(null);
+        }
+      },
+      (err) => console.error('[App] settings/password snapshot error', err),
+    );
+
+    return () => unsub();
+  }, []);
 
   const HandleConfigClick = () => SetShowPasswordView(true);
 

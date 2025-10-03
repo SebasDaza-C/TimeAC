@@ -126,6 +126,7 @@ export function ConfigView({
     try {
       const passwordRef = doc(Db, 'settings', 'password');
       await setDoc(passwordRef, { value: NewPassword });
+        console.log('[ConfigView] Password updated to:', NewPassword);
       SetPasswordMessage({ type: 'success', text: 'Contraseña cambiada con éxito.' });
       SetNewPassword('');
       SetConfirmPassword('');

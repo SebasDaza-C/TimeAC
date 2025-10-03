@@ -13,11 +13,13 @@ export function UseSchedules() {
     const unsub = onSnapshot(
       collection(Db, 'jornadas'),
       (snapshot) => {
+        console.log('[UseSchedules] onSnapshot received', snapshot.docs.length, 'docs');
         const Data = snapshot.docs.map((d) => d.data() as Schedule);
         SetSchedules(Data);
         SetLoading(false);
       },
       (err) => {
+        console.error('[UseSchedules] onSnapshot error', err);
         SetErrorState(err);
         SetLoading(false);
       }
