@@ -11,10 +11,10 @@ export function ViewSchedules({ Schedule, Blocks, CurrentBlock }: Props) {
   if (!Schedule) {
     return (
       <div className="glass-card schedule-card no-schedule-card">
-        <h2 className="schedule-title">No Schedule</h2>
+        <h2 className="schedule-title">Fuera de Horario</h2>
         <div className="no-schedule-content">
           <i className="bx bxs-moon no-schedule-icon"></i>
-          <p>No classes right now. Enjoy your break!</p>
+          <p>No hay clases en este momento. ¡Disfruta tu descanso!</p>
         </div>
       </div>
     );

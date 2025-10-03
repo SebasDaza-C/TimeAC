@@ -140,7 +140,7 @@ export default function App() {
       SetShowConfig(true);
       SetPasswordError('');
     } else {
-      SetPasswordError('Incorrect password.');
+      SetPasswordError('Contraseña incorrecta.');
     }
   };
 

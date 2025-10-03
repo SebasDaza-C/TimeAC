@@ -111,7 +111,7 @@ export function ConfigView({
 
   const HandlePasswordChange = () => {
     if (NewPassword !== ConfirmPassword) {
-      SetPasswordMessage({ type: 'error', text: 'Passwords do not match.' });
+      SetPasswordMessage({ type: 'error', text: 'Las contraseñas no coinciden.' });
       return;
     }
     if (NewPassword.length < 4) {
