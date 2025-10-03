@@ -6,7 +6,7 @@ import { ViewSchedules } from './components/ViewSchedules';
 import { UseStore } from './Store';
 import { UseSchedules } from './hooks/UseSchedules';
 import type { Schedule, Block } from './Types';
-import { collection, doc, getDocs, writeBatch } from 'firebase/firestore';
+import { collection, doc, getDocs, writeBatch, setDoc } from 'firebase/firestore';
 import { Db } from './firebaseClient';
 
 const LOCAL_STORAGE_KEY = 'timeac-schedules';
@@ -122,6 +122,14 @@ export default function App() {
       SetCurrentBlock(undefined);
     }
   }, [CurrentTime, AllSchedules, ScheduleSettings]);
+
+  // This new useEffect will write the current alias to Firestore
+  // whenever the active block changes. This is for the ESP32 to read.
+  useEffect(() => {
+    const alias = CurrentBlock?.block.alias || 'F';
+    const statusRef = doc(Db, 'status', 'display');
+    setDoc(statusRef, { currentAlias: alias });
+  }, [CurrentBlock]);
 
   const HandleConfigClick = () => SetShowPasswordView(true);
 
