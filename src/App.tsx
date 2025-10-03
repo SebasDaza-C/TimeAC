@@ -6,7 +6,7 @@ import { ViewSchedules } from './components/ViewSchedules';
 import { UseStore } from './Store';
 import { UseSchedules } from './hooks/UseSchedules';
 import type { Schedule, Block } from './Types';
-import { collection, doc, getDocs, writeBatch, setDoc } from 'firebase/firestore';
+import { collection, doc, getDocs, writeBatch, setDoc, getDoc } from 'firebase/firestore';
 import { Db } from './firebaseClient';
 
 const LOCAL_STORAGE_KEY = 'timeac-schedules';
@@ -43,31 +43,39 @@ export default function App() {
   // Load schedules from localStorage or Firestore/jornadas
   useEffect(() => {
     const loadInitial = async () => {
+      // 1) If Firestore has schedules (real-time listener), prefer them.
+      if (Schedules && Schedules.length > 0) {
+        SetAllSchedules(Schedules as Schedule[]);
+        return;
+      }
+
+      // 2) If no schedules yet from Firestore, try localStorage as a temporary fallback
+      //    so the UI can show something immediately. Do NOT return here — when Schedules
+      //    later arrive the effect will re-run and replace this value with the live data.
       const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (stored) {
         try {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed) && parsed.length > 0) {
             SetAllSchedules(parsed as Schedule[]);
-            return;
+            // do not return: allow Firestore Schedules to overwrite when available
           }
         } catch (e) {
-          /* ignore */
+          /* ignore malformed localStorage */
         }
       }
 
-      if (Schedules && Schedules.length > 0) {
-        SetAllSchedules(Schedules as Schedule[]);
-        return;
-      }
-
-      // Fallback to public/Schedules.json
-      try {
-        const res = await fetch('/Schedules.json');
-        const data = await res.json();
-        SetAllSchedules(data);
-      } catch (e) {
-        // ignore
+      // 3) Fallback to public/Schedules.json only if we still don't have any schedules.
+      if ((!stored || stored === 'null') && (!Schedules || Schedules.length === 0)) {
+        try {
+          const res = await fetch('/Schedules.json');
+          if (res.ok) {
+            const data = await res.json();
+            SetAllSchedules(data);
+          }
+        } catch (e) {
+          // ignore
+        }
       }
     };
     loadInitial();
@@ -133,24 +141,56 @@ export default function App() {
 
   const HandleConfigClick = () => SetShowPasswordView(true);
 
-  const HandlePasswordSubmit = (password: string) => {
-    const stored = localStorage.getItem('timeac-password') || '1234';
-    if (password === stored) {
-      SetShowPasswordView(false);
-      SetShowConfig(true);
-      SetPasswordError('');
-    } else {
-      SetPasswordError('Contraseña incorrecta.');
+  const HandlePasswordSubmit = async (password: string) => {
+    try {
+      const passwordRef = doc(Db, 'settings', 'password');
+      const passwordDoc = await getDoc(passwordRef);
+      const storedPassword = passwordDoc.exists() ? passwordDoc.data().value : '1234';
+
+      if (password === storedPassword) {
+        SetShowPasswordView(false);
+        SetShowConfig(true);
+        SetPasswordError('');
+      } else {
+        SetPasswordError('Contraseña incorrecta.');
+      }
+    } catch (err) {
+      console.error('Error fetching password:', err);
+      SetPasswordError('Error al verificar la contraseña. Revisa la consola para más detalles.');
     }
   };
 
-  const HandleSaveSettings = (
+  const HandleSaveSettings = async (
     newSchedules: Schedule[],
     newSettings: { Morning: 'Normal' | 'Special'; Afternoon: 'Normal' | 'Special' },
   ) => {
-    SetAllSchedules(newSchedules);
-    UseStore.setState({ ScheduleSettings: newSettings });
-    SetShowConfig(false);
+    try {
+      const batch = writeBatch(Db);
+      const collectionRef = collection(Db, 'jornadas');
+
+      // Delete existing documents not in newSchedules
+      const existingDocsSnapshot = await getDocs(collectionRef);
+      existingDocsSnapshot.forEach((doc) => {
+        if (!newSchedules.some((s) => String(s.id) === doc.id)) {
+          batch.delete(doc.ref);
+        }
+      });
+
+      // Set new/updated documents
+      newSchedules.forEach((schedule) => {
+        const docRef = doc(Db, 'jornadas', String(schedule.id));
+        batch.set(docRef, schedule);
+      });
+
+      await batch.commit();
+
+      // No need to call SetAllSchedules here, onSnapshot will do it
+      UseStore.setState({ ScheduleSettings: newSettings });
+      SetShowConfig(false);
+    } catch (err) {
+      console.error('Error saving settings:', err);
+      alert('Error al guardar la configuración. Revisa la consola para más detalles.');
+    }
   };
 
   const HandleResetSettings = async () => {

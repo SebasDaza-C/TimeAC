@@ -565,3 +565,26 @@ body::-webkit-scrollbar-thumb:hover,
 .block-editor button {
   margin-top: 0;
 }
+
+@media (max-width: 768px) {
+  .main-content {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .app-container {
+    height: auto;
+  }
+
+  .clock-container {
+    padding: 20px;
+  }
+
+  .block-number {
+    font-size: 8rem;
+  }
+
+  .clock {
+    font-size: 3rem;
+  }
+}

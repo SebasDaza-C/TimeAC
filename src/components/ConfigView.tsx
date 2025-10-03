@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { doc, setDoc } from 'firebase/firestore';
+import { Db } from '../firebaseClient';
 import type { Block, Schedule } from '../Types';
 
 interface Props {
@@ -109,20 +111,32 @@ export function ConfigView({
     SetLocalSchedules(NewSchedules);
   };
 
-  const HandlePasswordChange = () => {
+  const HandlePasswordChange = async () => {
     if (NewPassword !== ConfirmPassword) {
       SetPasswordMessage({ type: 'error', text: 'Las contraseñas no coinciden.' });
       return;
     }
     if (NewPassword.length < 4) {
-      SetPasswordMessage({ type: 'error', text: 'Password must be at least 4 characters.' });
+      SetPasswordMessage({
+        type: 'error',
+        text: 'La contraseña debe tener al menos 4 caracteres.',
+      });
       return;
     }
-    localStorage.setItem('timeac-password', NewPassword);
-    SetPasswordMessage({ type: 'success', text: 'Password changed successfully.' });
-    SetNewPassword('');
-    SetConfirmPassword('');
-    setTimeout(() => SetPasswordMessage(null), 3000);
+    try {
+      const passwordRef = doc(Db, 'settings', 'password');
+      await setDoc(passwordRef, { value: NewPassword });
+      SetPasswordMessage({ type: 'success', text: 'Contraseña cambiada con éxito.' });
+      SetNewPassword('');
+      SetConfirmPassword('');
+      setTimeout(() => SetPasswordMessage(null), 3000);
+    } catch (err) {
+      console.error('Error changing password:', err);
+      SetPasswordMessage({
+        type: 'error',
+        text: 'Error al cambiar la contraseña. Revisa la consola para más detalles.',
+      });
+    }
   };
 
   const HandleConfirmReset = () => {
