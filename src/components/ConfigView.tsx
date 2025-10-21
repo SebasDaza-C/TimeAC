@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { doc, setDoc } from 'firebase/firestore';
-import { Db } from '../firebaseClient';
-import type { Block, Schedule } from '../Types';
+import { Db, updateBellControls, onBellControlsChange } from '../firebaseClient';
+import type { Block, Schedule, BellControls } from '../Types';
 
 interface Props {
   ScheduleSettings: { Morning: 'Normal' | 'Special'; Afternoon: 'Normal' | 'Special' };
@@ -33,6 +33,13 @@ export function ConfigView({
     text: string;
   } | null>(null);
   const [ShowResetConfirm, SetShowResetConfirm] = useState(false);
+  const [bellControls, setBellControls] = useState<BellControls | null>(null);
+  const [showRingFeedback, setShowRingFeedback] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = onBellControlsChange(setBellControls);
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     if (LocalSchedules.length > 0) {
@@ -40,6 +47,28 @@ export function ConfigView({
       if (!SelectedExists) SetSelectedScheduleId(LocalSchedules[0].id);
     }
   }, [LocalSchedules, SelectedScheduleId]);
+
+  const handleRingBell = () => {
+    if (!bellControls || showRingFeedback) return;
+    updateBellControls({ manualRing: (bellControls.manualRing || 0) + 1 });
+    setShowRingFeedback(true);
+    setTimeout(() => setShowRingFeedback(false), 1500);
+  };
+
+  const handleToggleAutoRing = () => {
+    if (!bellControls) return;
+    const newBellControls = { ...bellControls, autoRingEnabled: !bellControls.autoRingEnabled };
+    setBellControls(newBellControls);
+    updateBellControls({ autoRingEnabled: newBellControls.autoRingEnabled });
+  };
+
+  const handleToggleSilence = () => {
+    if (!bellControls) return;
+    const newBellControls = { ...bellControls, isSilenced: !bellControls.isSilenced };
+    setBellControls(newBellControls);
+    updateBellControls({ isSilenced: newBellControls.isSilenced });
+  };
+
 
   const HandleScheduleTypeToggle = (TimeOfDay: 'Morning' | 'Afternoon') => {
     const NewType = LocalSettings[TimeOfDay] === 'Normal' ? 'Special' : 'Normal';
@@ -57,18 +86,18 @@ export function ConfigView({
     ScheduleId: number,
     BlockId: number,
     Field: keyof Omit<Block, 'id' | 'start' | 'end'>,
-      Value: string | number,
+    Value: string | number,
   ) => {
     const NewSchedules = LocalSchedules.map((j: Schedule) => {
       if (j.id === ScheduleId) {
-            const NewBlocks = j.blocks.map((b: Block) =>
-              b.id === BlockId
-                ? {
-                    ...b,
-                    [Field]: Field === 'duration' ? Number(Value) : (Value as string | number),
-                  }
-                : b,
-            );
+        const NewBlocks = j.blocks.map((b: Block) =>
+          b.id === BlockId
+            ? {
+                ...b,
+                [Field]: Field === 'duration' ? Number(Value) : (Value as string | number),
+              }
+            : b,
+        );
         return { ...j, blocks: NewBlocks };
       }
       return j;
@@ -126,7 +155,7 @@ export function ConfigView({
     try {
       const passwordRef = doc(Db, 'settings', 'password');
       await setDoc(passwordRef, { value: NewPassword });
-        console.log('[ConfigView] Password updated to:', NewPassword);
+      console.log('[ConfigView] Password updated to:', NewPassword);
       SetPasswordMessage({ type: 'success', text: 'Contraseña cambiada con éxito.' });
       SetNewPassword('');
       SetConfirmPassword('');
@@ -151,6 +180,45 @@ export function ConfigView({
     <div className={`config-view ${ClassName || ''}`}>
       <div className="config-content">
         <h2>Configuración</h2>
+
+        <div className="config-section">
+          <h3>Controles del Timbre</h3>
+          <div className="config-controls-vertical-list">
+            <div className="config-controls">
+                <button
+                  onClick={handleRingBell}
+                  disabled={!bellControls || bellControls.isSilenced || showRingFeedback}
+                  className={`control-button full-width ${showRingFeedback ? 'active-feedback' : ''}`}>
+                  <i className={`bx ${showRingFeedback ? 'bx-check' : 'bxs-bell-ring'}`}></i>
+                  <span>{showRingFeedback ? 'Enviado!' : 'Sonar Timbre Ahora'}</span>
+                </button>
+            </div>
+            <div className="config-controls">
+              <span>Timbre Automático</span>
+              <label className="switch">
+                <input
+                  type="checkbox"
+                  checked={bellControls?.autoRingEnabled ?? false}
+                  onChange={handleToggleAutoRing}
+                  disabled={!bellControls}
+                />
+                <span className="slider"></span>
+              </label>
+            </div>
+            <div className="config-controls">
+              <span>Modo Silencio</span>
+              <label className="switch">
+                <input
+                  type="checkbox"
+                  checked={bellControls?.isSilenced ?? false}
+                  onChange={handleToggleSilence}
+                  disabled={!bellControls}
+                />
+                <span className="slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
 
         <div className="config-section">
           <h3>Cambiar Contraseña</h3>
@@ -251,7 +319,7 @@ export function ConfigView({
                       }
                     />
                     <button
-                      onClick={() => HandleDeleteBlock(SelectedSchedule.id, Block.id)}
+                      onClick={() => HandleDeleteBlock(SelectedSchedule.id, BlockId)}
                       className="danger-button icon-button"
                     >
                       <i className="bx bx-trash"></i>

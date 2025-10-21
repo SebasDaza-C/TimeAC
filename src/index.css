@@ -8,6 +8,7 @@
   --muted: #9e9e9e;
   --accent: #e53935;
   --accent-strong: #b71c1c;
+  --success: #4caf50;
   --track: #2a2a2a;
   --thumb: #555;
   --thumb-hover: rgba(229, 57, 53, 1);
@@ -16,6 +17,10 @@
 
 /* General Body Styles */
 body,
+
+* {
+  font-family: 'Outfit', sans-serif;
+}
 html {
   margin: 0;
   padding: 0;
@@ -24,71 +29,22 @@ html {
   font-family: 'Outfit', sans-serif;
   background-color: var(--bg);
   color: #ffffff;
-  overflow: hidden; /* app uses internal scroll areas */
+  overflow-y: auto; /* Allow vertical scroll */
+  overflow-x: hidden; /* Prevent horizontal scroll */
 }
 
 #root {
   height: 100%;
   display: flex;
-  align-items: center;
+  align-items: flex-start; /* Align content to the top */
   justify-content: center;
-}
-
-input,
-button,
-select,
-textarea {
-  font-family: inherit;
-  font-size: inherit;
-}
-
-/* Scrollbar styles (WebKit) and Firefox fallbacks */
-body::-webkit-scrollbar,
-.schedule-card::-webkit-scrollbar,
-.schedule-list::-webkit-scrollbar,
-.jornada-list::-webkit-scrollbar,
-.config-content::-webkit-scrollbar,
-.config-content *::-webkit-scrollbar {
-  width: 12px;
-  height: 12px;
-}
-
-body::-webkit-scrollbar-track,
-.schedule-card::-webkit-scrollbar-track,
-.schedule-list::-webkit-scrollbar-track,
-.jornada-list::-webkit-scrollbar-track,
-.config-content::-webkit-scrollbar-track {
-  background: var(--track);
-}
-
-body::-webkit-scrollbar-thumb,
-.schedule-card::-webkit-scrollbar-thumb,
-.schedule-list::-webkit-scrollbar-thumb,
-.jornada-list::-webkit-scrollbar-thumb,
-.config-content::-webkit-scrollbar-thumb {
-  background: var(--thumb);
-  border-radius: 8px;
-  border: 2px solid var(--track);
-}
-
-body::-webkit-scrollbar-thumb:hover,
-.schedule-card::-webkit-scrollbar-thumb:hover,
-.schedule-list::-webkit-scrollbar-thumb:hover,
-.jornada-list::-webkit-scrollbar-thumb:hover,
-.config-content::-webkit-scrollbar-thumb:hover {
-  background: var(--thumb-hover);
-}
-
-/* Firefox */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--thumb) var(--track);
+  padding-top: 2vh; /* Add some space at the top */
 }
 
 .app-container {
   display: flex;
   flex-direction: column;
-  height: 95vh;
+  min-height: 95vh; /* Use min-height to allow growing */
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
@@ -488,8 +444,6 @@ body::-webkit-scrollbar-thumb:hover,
   margin-bottom: 10px;
 }
 
-/* legacy small-scroll rules consolidated into the root scrollbar rules above */
-
 .error-message {
   color: #ef5350;
   margin-top: 10px;
@@ -566,6 +520,46 @@ body::-webkit-scrollbar-thumb:hover,
   margin-top: 0;
 }
 
+/* --- Bell Control Styles --- */
+
+.config-controls-vertical-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.config-controls span {
+  font-weight: 500;
+}
+
+.config-controls span strong {
+  color: var(--accent);
+}
+
+.control-button.full-width {
+  width: 100%;
+  justify-content: center;
+}
+
+.control-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Feedback Animation */
+.control-button.active-feedback {
+  background-color: var(--success) !important;
+  border-color: var(--success) !important;
+  color: white;
+}
+
+.control-button.active-feedback i {
+  color: white;
+}
+
+
+/* Responsive Adjustments */
 @media (max-width: 768px) {
   .main-content {
     grid-template-columns: 1fr;
@@ -587,4 +581,85 @@ body::-webkit-scrollbar-thumb:hover,
   .clock {
     font-size: 3rem;
   }
+
+  .config-controls-grid {
+    grid-template-columns: 1fr; /* Stack controls on small screens */
+  }
+}
+
+/* Toggle Switch Styles */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 28px;
+}
+
+.switch input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--card-2);
+  transition: 0.4s;
+  border-radius: 34px;
+  border: 1px solid #333;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 4px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: var(--accent);
+}
+
+input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+input:disabled + .slider {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Custom Scrollbar for .config-content */
+.config-content::-webkit-scrollbar {
+  width: 12px;
+}
+
+.config-content::-webkit-scrollbar-track {
+  background: var(--track);
+  border-radius: 10px;
+}
+
+.config-content::-webkit-scrollbar-thumb {
+  background-color: var(--thumb);
+  border-radius: 10px;
+  border: 3px solid var(--track);
+}
+
+.config-content::-webkit-scrollbar-thumb:hover {
+  background-color: var(--thumb-hover);
 }

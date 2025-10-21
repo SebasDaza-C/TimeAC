@@ -15,3 +15,9 @@ export interface Schedule {
   startTime: string;
   blocks: Block[];
 }
+
+export interface BellControls {
+  manualRing: number;
+  autoRingEnabled: boolean;
+  isSilenced: boolean;
+}
