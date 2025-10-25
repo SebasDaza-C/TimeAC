@@ -26,7 +26,7 @@ const MinutesToTime = (minutes: number) => {
 };
 
 export default function App() {
-  const { Schedules } = UseSchedules();
+  const { Schedules, Loading } = UseSchedules();
   const SetAllSchedules = UseStore((state) => state.SetAllSchedules);
   const ScheduleSettings = UseStore((state) => state.ScheduleSettings);
   const AllSchedules = UseStore((state) => state.AllSchedules);
@@ -41,33 +41,31 @@ export default function App() {
     undefined,
   );
 
-  // Load schedules from localStorage or Firestore/jornadas
   useEffect(() => {
     const loadInitial = async () => {
-      // 1) If Firestore has schedules (real-time listener), prefer them.
+      // If we have schedules from Firestore, use them.
       if (Schedules && Schedules.length > 0) {
         SetAllSchedules(Schedules as Schedule[]);
         return;
       }
 
-      // 2) If no schedules yet from Firestore, try localStorage as a temporary fallback
-      //    so the UI can show something immediately. Do NOT return here — when Schedules
-      //    later arrive the effect will re-run and replace this value with the live data.
-      const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            SetAllSchedules(parsed as Schedule[]);
-            // do not return: allow Firestore Schedules to overwrite when available
+      // If we are done loading from Firestore and there are no schedules,
+      // then try the fallbacks.
+      if (!Loading && Schedules.length === 0) {
+        const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              SetAllSchedules(parsed as Schedule[]);
+              return; // Found in localStorage, so we're done.
+            }
+          } catch (e) {
+            /* ignore malformed localStorage */
           }
-        } catch (e) {
-          /* ignore malformed localStorage */
         }
-      }
 
-      // 3) Fallback to public/Schedules.json only if we still don't have any schedules.
-      if ((!stored || stored === 'null') && (!Schedules || Schedules.length === 0)) {
+        // Fallback to public/Schedules.json
         try {
           const res = await fetch('/Schedules.json');
           if (res.ok) {
@@ -80,7 +78,7 @@ export default function App() {
       }
     };
     loadInitial();
-  }, [Schedules, SetAllSchedules]);
+  }, [Schedules, SetAllSchedules, Loading]);
 
   // tick
   useEffect(() => {
