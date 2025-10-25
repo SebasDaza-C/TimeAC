@@ -6,8 +6,8 @@ import { ViewSchedules } from './components/ViewSchedules';
 import { UseStore } from './Store';
 import { UseSchedules } from './hooks/UseSchedules';
 import type { Schedule, Block } from './Types';
-import { collection, doc, getDocs, writeBatch, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
-import { Db } from './firebaseClient';
+import { ref, set, get, onValue, update } from 'firebase/database';
+import { Db, AppClient } from './firebaseClient';
 
 const LOCAL_STORAGE_KEY = 'timeac-schedules';
 
@@ -42,54 +42,53 @@ export default function App() {
   );
 
   useEffect(() => {
-    const loadInitial = async () => {
-      // If we have schedules from Firestore, use them.
-      if (Schedules && Schedules.length > 0) {
-        SetAllSchedules(Schedules as Schedule[]);
-        return;
-      }
+    // The UseSchedules hook is now the single source of truth for schedules.
+    // When it provides new data (from Realtime Database), we update the global store.
+    // The hook handles loading and error states internally.
+    SetAllSchedules(Schedules);
+  }, [Schedules, SetAllSchedules]);
 
-      // If we are done loading from Firestore and there are no schedules,
-      // then try the fallbacks.
-      if (!Loading && Schedules.length === 0) {
-        const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-        if (stored) {
-          try {
-            const parsed = JSON.parse(stored);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              SetAllSchedules(parsed as Schedule[]);
-              return; // Found in localStorage, so we're done.
-            }
-          } catch (e) {
-            /* ignore malformed localStorage */
-          }
-        }
+  // Database auto-initialization
+  useEffect(() => {
+    // If loading is finished and there are no schedules, the database is empty.
+    // Let's populate it with default data from the local JSON file.
+    const initializeDatabase = async () => {
+      console.log('[App] No schedules found. Initializing database with default data...');
+      try {
+        // 1. Fetch the source of truth from the public JSON file
+        const res = await fetch('/Schedules.json');
+        if (!res.ok) throw new Error(`Cannot fetch Schedules.json: ${res.statusText}`);
+        const newSchedules = await res.json();
 
-        // Fallback to public/Schedules.json
-        try {
-          const res = await fetch('/Schedules.json');
-          if (res.ok) {
-            const data = await res.json();
-            SetAllSchedules(data);
-          }
-        } catch (e) {
-          // ignore
-        }
+        // 2. Convert array to an object for RTDB
+        const schedulesObject = newSchedules.reduce((acc: any, schedule: Schedule) => {
+          acc[schedule.id] = schedule;
+          return acc;
+        }, {});
+
+        // 3. Prepare updates for different paths
+        const updates: { [key: string]: any } = {};
+        updates['/jornadas'] = schedulesObject;
+        updates['/settings/password'] = '1234'; // Set a default password
+
+        // 4. Perform a multi-path update
+        await update(ref(Db), updates);
+        console.log('[App] Database initialized successfully.');
+      } catch (err) {
+        console.error('Error initializing database:', err);
       }
     };
-    loadInitial();
-  }, [Schedules, SetAllSchedules, Loading]);
+
+    if (!Loading && Schedules.length === 0) {
+      initializeDatabase();
+    }
+  }, [Loading, Schedules]);
 
   // tick
   useEffect(() => {
     const id = setInterval(() => SetCurrentTime(new Date()), 1000);
     return () => clearInterval(id);
   }, []);
-
-  // persist
-  useEffect(() => {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(AllSchedules));
-  }, [AllSchedules]);
 
   // determine active schedule and current block
   useEffect(() => {
@@ -130,26 +129,26 @@ export default function App() {
     }
   }, [CurrentTime, AllSchedules, ScheduleSettings]);
 
-  // This new useEffect will write the current alias to Firestore
+  // This new useEffect will write the current alias to Realtime Database
   // whenever the active block changes. This is for the ESP32 to read.
   useEffect(() => {
     const alias = CurrentBlock?.block.alias || 'F';
-    const statusRef = doc(Db, 'status', 'display');
-    setDoc(statusRef, { currentAlias: alias });
+    const statusRef = ref(Db, 'status/display/currentAlias');
+    set(statusRef, alias);
   }, [CurrentBlock]);
 
   // Listen for password changes in real-time for debug/instant update
   useEffect(() => {
-    const passwordRef = doc(Db, 'settings', 'password');
-    const unsub = onSnapshot(
+    const passwordRef = ref(Db, 'settings/password');
+    const unsub = onValue(
       passwordRef,
-      (snap) => {
-        if (snap.exists()) {
-          const val = (snap.data() as any).value;
+      (snapshot) => {
+        const val = snapshot.val();
+        if (val !== null) {
           console.log('[App] settings/password snapshot:', val);
           SetRemotePassword(val);
         } else {
-          console.log('[App] settings/password snapshot: document does not exist');
+          console.log('[App] settings/password snapshot: path does not exist');
           SetRemotePassword(null);
         }
       },
@@ -163,9 +162,9 @@ export default function App() {
 
   const HandlePasswordSubmit = async (password: string) => {
     try {
-      const passwordRef = doc(Db, 'settings', 'password');
-      const passwordDoc = await getDoc(passwordRef);
-      const storedPassword = passwordDoc.exists() ? passwordDoc.data().value : '1234';
+      const passwordRef = ref(Db, 'settings/password');
+      const passwordSnapshot = await get(passwordRef);
+      const storedPassword = passwordSnapshot.exists() ? passwordSnapshot.val() : '1234';
 
       if (password === storedPassword) {
         SetShowPasswordView(false);
@@ -185,24 +184,13 @@ export default function App() {
     newSettings: { Morning: 'Normal' | 'Special'; Afternoon: 'Normal' | 'Special' },
   ) => {
     try {
-      const batch = writeBatch(Db);
-      const collectionRef = collection(Db, 'jornadas');
-
-      // Delete existing documents not in newSchedules
-      const existingDocsSnapshot = await getDocs(collectionRef);
-      existingDocsSnapshot.forEach((doc) => {
-        if (!newSchedules.some((s) => String(s.id) === doc.id)) {
-          batch.delete(doc.ref);
-        }
-      });
-
-      // Set new/updated documents
-      newSchedules.forEach((schedule) => {
-        const docRef = doc(Db, 'jornadas', String(schedule.id));
-        batch.set(docRef, schedule);
-      });
-
-      await batch.commit();
+      // With Realtime Database, we can overwrite the entire 'jornadas' node.
+      // We'll structure it as an object with schedule.id as keys for easier lookup.
+      const schedulesObject = newSchedules.reduce((acc, schedule) => {
+        acc[schedule.id] = schedule;
+        return acc;
+      }, {} as { [id: number]: Schedule });
+      await set(ref(Db, 'jornadas'), schedulesObject);
 
       // No need to call SetAllSchedules here, onSnapshot will do it
       UseStore.setState({ ScheduleSettings: newSettings });
@@ -210,63 +198,6 @@ export default function App() {
     } catch (err) {
       console.error('Error saving settings:', err);
       alert('Error al guardar la configuración. Revisa la consola para más detalles.');
-    }
-  };
-
-  const HandleResetSettings = async () => {
-    // This function will reset the entire Firestore 'jornadas' collection
-    // to the state defined in the local `public/Schedules.json`.
-    // NOTE: This client-side implementation requires open write permissions
-    // on the 'jornadas' collection. For production, this logic should be
-    // moved to a secure backend environment (e.g., a Firebase Cloud Function).
-    if (
-      !window.confirm(
-        '¿Estás seguro de que quieres restablecer la base de datos? Esta acción afectará a todos los usuarios.',
-      )
-    ) {
-      return;
-    }
-
-    alert('Restableciendo la base de datos... Esto puede tardar un momento.');
-
-    try {
-      // 1. Fetch the source of truth from the public JSON file
-      const res = await fetch('/Schedules.json');
-      if (!res.ok) {
-        throw new Error(`Cannot fetch Schedules.json: ${res.statusText}`);
-      }
-      const newSchedules = await res.json();
-
-      // 2. Get a reference to the collection
-      const collectionRef = collection(Db, 'jornadas');
-
-      // 3. Create a batch to perform atomic operations
-      const batch = writeBatch(Db);
-
-      // 4. Delete all existing documents in the collection
-      const existingDocsSnapshot = await getDocs(collectionRef);
-      existingDocsSnapshot.forEach((doc) => {
-        batch.delete(doc.ref);
-      });
-
-      // 5. Add the new documents from the JSON file
-      newSchedules.forEach((schedule: Schedule) => {
-        const docRef = doc(Db, 'jornadas', String(schedule.id));
-        batch.set(docRef, schedule);
-      });
-
-      // 6. Commit the batch
-      await batch.commit();
-
-      // 7. Reset local UI state for settings
-      UseStore.setState({ ScheduleSettings: { Morning: 'Normal', Afternoon: 'Normal' } });
-
-      alert('¡Base de datos restablecida con éxito!');
-    } catch (err) {
-      console.error('Error resetting database:', err);
-      alert(
-        `Error al restablecer la base de datos. Es posible que no tengas los permisos necesarios. Revisa la consola para más detalles.`,
-      );
     }
   };
 
@@ -315,7 +246,6 @@ export default function App() {
           AllSchedules={AllSchedules}
           OnSaveAndClose={HandleSaveSettings}
           OnCloseWithoutSaving={() => SetShowConfig(false)}
-          OnReset={HandleResetSettings}
           ClassName={ShowConfig ? 'show' : ''}
         />
       )}

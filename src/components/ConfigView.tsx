@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { doc, setDoc } from 'firebase/firestore';
+import { ref, set } from 'firebase/database';
 import { Db, updateBellControls, onBellControlsChange } from '../firebaseClient';
 import type { Block, Schedule, BellControls } from '../Types';
 
@@ -11,7 +11,6 @@ interface Props {
     Settings: { Morning: 'Normal' | 'Special'; Afternoon: 'Normal' | 'Special' },
   ) => void;
   OnCloseWithoutSaving: () => void;
-  OnReset: () => void;
   ClassName?: string;
 }
 
@@ -20,7 +19,6 @@ export function ConfigView({
   AllSchedules,
   OnSaveAndClose,
   OnCloseWithoutSaving,
-  OnReset,
   ClassName,
 }: Props) {
   const [LocalSchedules, SetLocalSchedules] = useState(AllSchedules);
@@ -32,7 +30,6 @@ export function ConfigView({
     type: 'error' | 'success';
     text: string;
   } | null>(null);
-  const [ShowResetConfirm, SetShowResetConfirm] = useState(false);
   const [bellControls, setBellControls] = useState<BellControls | null>(null);
   const [showRingFeedback, setShowRingFeedback] = useState(false);
 
@@ -114,9 +111,10 @@ export function ConfigView({
   const HandleAddBlock = (ScheduleId: number) => {
     const NewSchedules = LocalSchedules.map((j) => {
       if (j.id === ScheduleId) {
+        // Correctly find the highest ID across ALL blocks in ALL schedules to ensure uniqueness
         const NewBlockId =
-          j.blocks.length > 0
-            ? Math.max(...LocalSchedules.flatMap((x) => x.blocks).map((b) => b.id)) + 1
+          LocalSchedules.flatMap((s) => s.blocks).length > 0
+            ? Math.max(...LocalSchedules.flatMap((s) => s.blocks).map((b) => b.id)) + 1
             : 1;
         const NewBlock: Block = {
           id: NewBlockId,
@@ -153,9 +151,9 @@ export function ConfigView({
       return;
     }
     try {
-      const passwordRef = doc(Db, 'settings', 'password');
-      await setDoc(passwordRef, { value: NewPassword });
-      console.log('[ConfigView] Password updated to:', NewPassword);
+      const passwordRef = ref(Db, 'settings/password');
+      await set(passwordRef, NewPassword);
+      console.log('[ConfigView] Contraseña actualizada en Realtime Database.');
       SetPasswordMessage({ type: 'success', text: 'Contraseña cambiada con éxito.' });
       SetNewPassword('');
       SetConfirmPassword('');
@@ -167,11 +165,6 @@ export function ConfigView({
         text: 'Error al cambiar la contraseña. Revisa la consola para más detalles.',
       });
     }
-  };
-
-  const HandleConfirmReset = () => {
-    OnReset();
-    SetShowResetConfirm(false);
   };
 
   const SelectedSchedule = LocalSchedules.find((j) => j.id === SelectedScheduleId);
@@ -319,7 +312,7 @@ export function ConfigView({
                       }
                     />
                     <button
-                      onClick={() => HandleDeleteBlock(SelectedSchedule.id, BlockId)}
+                      onClick={() => HandleDeleteBlock(SelectedSchedule.id, Block.id)}
                       className="danger-button icon-button"
                     >
                       <i className="bx bx-trash"></i>
@@ -329,14 +322,6 @@ export function ConfigView({
               </div>
             </div>
           )}
-        </div>
-
-        <div className="config-section">
-          <h3>Zona de Peligro</h3>
-          <p>Restablece todos los horarios y ajustes a sus valores originales.</p>
-          <button onClick={() => SetShowResetConfirm(true)} className="danger-button">
-            Restablecer Ajustes
-          </button>
         </div>
 
         <div className="config-footer">
@@ -350,27 +335,7 @@ export function ConfigView({
             Guardar y Cerrar
           </button>
         </div>
-      </div>
-
-      {ShowResetConfirm && (
-        <div className="config-view show">
-          <div className="config-content">
-            <h2>Confirmar Restablecimiento</h2>
-            <p>
-              ¿Estás seguro de que quieres restablecer todas las configuraciones a sus valores por
-              defecto? Esta acción no se puede deshacer.
-            </p>
-            <div className="config-footer">
-              <button onClick={() => SetShowResetConfirm(false)} className="close-button">
-                Cancelar
-              </button>
-              <button onClick={HandleConfirmReset} className="danger-button">
-                Sí, restablecer
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      </div> {/* Cierre del div config-content */}
     </div>
   );
 }

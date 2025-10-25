@@ -1,25 +1,32 @@
 import { useEffect, useState } from 'react';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { ref, onValue } from 'firebase/database';
 import { Db } from '../firebaseClient';
 import type { Schedule } from '../Types';
 
 export function UseSchedules() {
   const [Schedules, SetSchedules] = useState<Schedule[]>([]);
   const [Loading, SetLoading] = useState<boolean>(true);
-  const [ErrorState, SetErrorState] = useState<Error | null>(null);
+  const [ErrorState, SetErrorState] = useState<unknown | null>(null);
 
   useEffect(() => {
     SetLoading(true);
-    const unsub = onSnapshot(
-      collection(Db, 'jornadas'),
+    const schedulesRef = ref(Db, 'jornadas');
+    const unsub = onValue(
+      schedulesRef,
       (snapshot) => {
-        console.log('[UseSchedules] onSnapshot received', snapshot.docs.length, 'docs');
-        const Data = snapshot.docs.map((d) => d.data() as Schedule);
-        SetSchedules(Data);
+        const data = snapshot.val();
+        if (data) {
+          // Realtime Database devuelve un objeto, lo convertimos a un array
+          const schedulesArray = Object.values(data) as Schedule[];
+          console.log('[UseSchedules] onValue received', schedulesArray.length, 'schedules');
+          SetSchedules(schedulesArray);
+        } else {
+          SetSchedules([]);
+        }
         SetLoading(false);
       },
       (err) => {
-        console.error('[UseSchedules] onSnapshot error', err);
+        console.error('[UseSchedules] onValue error', err);
         SetErrorState(err);
         SetLoading(false);
       }

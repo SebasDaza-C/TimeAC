@@ -1,11 +1,12 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore, doc, updateDoc, onSnapshot, DocumentData } from 'firebase/firestore';
+import { getDatabase, ref, update, onValue } from 'firebase/database';
 import type { BellControls } from './Types';
 
 const FirebaseConfig = {
   apiKey: import.meta.env.VITE_API_KEY,
   authDomain: import.meta.env.VITE_AUTH_DOMAIN,
   projectId: import.meta.env.VITE_PROJECT_ID,
+  databaseURL: 'https://timeac-2025-default-rtdb.firebaseio.com/',
   storageBucket: import.meta.env.VITE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_MESSAGING_SENDER_ID,
   appId: import.meta.env.VITE_APP_ID,
@@ -13,20 +14,21 @@ const FirebaseConfig = {
 };
 
 const AppClient = initializeApp(FirebaseConfig);
-const Db = getFirestore(AppClient);
+const Db = getDatabase(AppClient);
 
-const bellControlsRef = doc(Db, 'config', 'bellControls');
+const bellControlsRef = ref(Db, 'settings/bellControls');
 
 export const updateBellControls = (data: Partial<BellControls>) => {
-  return updateDoc(bellControlsRef, data);
+  return update(bellControlsRef, data);
 };
 
 export const onBellControlsChange = (callback: (data: BellControls) => void) => {
-  return onSnapshot(bellControlsRef, (docSnap) => {
-    if (docSnap.exists()) {
-      callback(docSnap.data() as BellControls);
+  return onValue(bellControlsRef, (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+      callback(data as BellControls);
     } else {
-      // If the document doesn't exist, provide default values
+      // Si no existen datos en la ruta, proveer valores por defecto
       callback({
         manualRing: 0,
         autoRingEnabled: true,
@@ -36,4 +38,4 @@ export const onBellControlsChange = (callback: (data: BellControls) => void) => 
   });
 };
 
-export { AppClient, Db, FirebaseConfig };
+export { AppClient, Db };
