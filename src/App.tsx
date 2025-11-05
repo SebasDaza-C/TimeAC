@@ -5,7 +5,7 @@ import { PasswordView } from './components/PasswordView';
 import { ViewSchedules } from './components/ViewSchedules';
 import { UseStore } from './Store';
 import { UseSchedules } from './hooks/UseSchedules';
-import type { Schedule, Block } from './Types';
+import type { Schedule, Block, BellControls } from './Types';
 import { ref, set, get, onValue, update } from 'firebase/database';
 import { Db, AppClient } from './firebaseClient';
 
@@ -40,6 +40,7 @@ export default function App() {
   const [CurrentBlock, SetCurrentBlock] = useState<{ block: Block; index: number } | undefined>(
     undefined,
   );
+  const [bellControls, setBellControls] = useState<BellControls | null>(null);
 
   useEffect(() => {
     // The UseSchedules hook is now the single source of truth for schedules.
@@ -137,6 +138,27 @@ export default function App() {
     set(statusRef, alias);
   }, [CurrentBlock]);
 
+  // This new useEffect will ring the bell automatically when the block changes,
+  // if autoRingEnabled is true.
+  useEffect(() => {
+    // Don't ring on initial load (when CurrentBlock is first set) or if bell controls are not loaded
+    if (!CurrentBlock || !bellControls) {
+      return;
+    }
+
+    // Ring only if auto-ring is enabled and the system is not silenced
+    if (bellControls.autoRingEnabled && !bellControls.isSilenced) {
+      console.log('[App] Auto-ringing bell for new block:', CurrentBlock.block.alias);
+      const ringDuration = (bellControls.manualRingDuration ?? 3) * 1000;
+      const bellRef = ref(Db, 'bellControls/isRinging');
+
+      set(bellRef, true);
+      setTimeout(() => {
+        set(bellRef, false);
+      }, ringDuration);
+    }
+  }, [CurrentBlock]); // This depends on CurrentBlock, so it runs when the block changes.
+
   // Listen for password changes in real-time for debug/instant update
   useEffect(() => {
     const passwordRef = ref(Db, 'settings/password');
@@ -156,6 +178,15 @@ export default function App() {
     );
 
     return () => unsub();
+  }, []);
+
+  // Listen for bell controls changes
+  useEffect(() => {
+    const bellControlsRef = ref(Db, 'bellControls');
+    const unsubscribe = onValue(bellControlsRef, (snapshot) => {
+      setBellControls(snapshot.val());
+    });
+    return () => unsubscribe();
   }, []);
 
   const HandleConfigClick = () => SetShowPasswordView(true);

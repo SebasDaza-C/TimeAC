@@ -58,21 +58,16 @@ export function ConfigView({
 
   const handleToggleAutoRing = () => {
     if (!bellControls) return;
-    const newBellControls = { ...bellControls, autoRingEnabled: !bellControls.autoRingEnabled };
-    setBellControls(newBellControls);
-    updateBellControls({ autoRingEnabled: newBellControls.autoRingEnabled });
+    updateBellControls({ autoRingEnabled: !bellControls.autoRingEnabled });
   };
 
   const handleToggleSilence = () => {
     if (!bellControls) return;
-    const newBellControls = { ...bellControls, isSilenced: !bellControls.isSilenced };
-    setBellControls(newBellControls);
-    updateBellControls({ isSilenced: newBellControls.isSilenced });
+    updateBellControls({ isSilenced: !bellControls.isSilenced });
   };
 
   const handleDurationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const duration = Number(e.target.value);
-    if (!bellControls) return;
     updateBellControls({ manualRingDuration: duration });
   }
 
@@ -221,7 +216,7 @@ export function ConfigView({
               </label>
             </div>
             <div className="config-controls">
-              <span>Duración Timbre Manual</span>
+              <span>Duración del Timbre</span>
               <select
                 value={bellControls?.manualRingDuration ?? 3}
                 onChange={handleDurationChange}
