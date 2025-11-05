@@ -10,7 +10,7 @@
 #define DATABASE_URL  "https://timeac-2025-default-rtdb.firebaseio.com/"
 
 // ====== CONFIGURACIÓN LED ======
-#define LED_PIN 2
+#define LED_PIN 2  // LED que simula el timbre
 
 // ====== Objetos Firebase ======
 FirebaseData fbdo;
@@ -53,27 +53,29 @@ void inicializarFirebase() {
   Firebase.RTDB.setReadTimeout(&fbdo, 10000);
   Firebase.RTDB.setwriteSizeLimit(&fbdo, "small");
 
-  if (Firebase.RTDB.beginStream(&fbdo, "/status/display/currentAlias")) {
-    Serial.println("🔊 Escuchando cambios en /status/display/currentAlias ...");
-    Firebase.RTDB.setStreamCallback(&fbdo,
-      [](FirebaseStream data) {  // 🔄 Callback inline (más limpio)
-        Serial.println("\n=== 🔄 Cambio detectado ===");
+  // ====== SUSCRIPCIÓN A bell/isRinging ======
+  if (Firebase.RTDB.beginStream(&fbdo, "/bell/isRinging")) {
+    Serial.println("🔊 Escuchando cambios en /bell/isRinging ...");
+
+    Firebase.RTDB.setStreamCallback(
+      &fbdo,
+      [](FirebaseStream data) {
+        Serial.println("\n=== 🔔 Cambio detectado ===");
         Serial.printf("Ruta: %s\n", data.streamPath().c_str());
         Serial.printf("Tipo: %s\n", data.dataType().c_str());
 
-        if (data.dataTypeEnum() == fb_esp_rtdb_data_type_integer) {
-          int valor = data.intData();
-          Serial.printf("Nuevo valor entero: %d\n", valor);
-          Serial.println("💡 Acción: LED parpadea 3 segundos");
+        if (data.dataTypeEnum() == fb_esp_rtdb_data_type_boolean) {
+          bool isRinging = data.boolData();
+          Serial.printf("Nuevo estado: %s\n", isRinging ? "TRUE (Encendido)" : "FALSE (Apagado)");
 
-          digitalWrite(LED_PIN, HIGH);
-          delay(3000);
-          digitalWrite(LED_PIN, LOW);
+          digitalWrite(LED_PIN, isRinging ? HIGH : LOW);
         } else {
-          Serial.printf("Valor recibido: %s\n", data.stringData().c_str());
+          Serial.printf("Valor inesperado: %s\n", data.stringData().c_str());
         }
       },
-      [](bool timeout) { if (timeout) Serial.println("⏳ Stream timeout, reconectando..."); }
+      [](bool timeout) {
+        if (timeout) Serial.println("⏳ Stream timeout, reconectando...");
+      }
     );
   } else {
     Serial.printf("❌ Error iniciando stream: %s\n", fbdo.errorReason().c_str());
@@ -81,7 +83,7 @@ void inicializarFirebase() {
 }
 
 void reconectarStream() {
-  if (!Firebase.RTDB.beginStream(&fbdo, "/status/display/currentAlias")) {
+  if (!Firebase.RTDB.beginStream(&fbdo, "/bell/isRinging")) {
     Serial.printf("❌ Error reintentando stream: %s\n", fbdo.errorReason().c_str());
   } else {
     Serial.println("✅ Stream reconectado correctamente.");
@@ -95,8 +97,6 @@ void setup() {
 
   Serial.println("\n===== 🔌 INICIANDO ESP32 =====");
   pinMode(LED_PIN, OUTPUT);
-  digitalWrite(LED_PIN, HIGH);
-  delay(2000);
   digitalWrite(LED_PIN, LOW);
 
   conectarWiFi();
@@ -112,6 +112,11 @@ void setup() {
 
 // ====== LOOP ======
 void loop() {
-  if (!fbdo.httpConnected()) reconectarStream();
+  // Si se pierde la conexión HTTP con Firebase, se reintenta el stream
+  if (!fbdo.httpConnected()) {
+    Serial.println("⚠️ Conexión perdida con Firebase, reintentando...");
+    reconectarStream();
+  }
+
   delay(5000);
 }

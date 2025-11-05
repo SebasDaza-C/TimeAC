@@ -16,10 +16,17 @@ const FirebaseConfig = {
 const AppClient = initializeApp(FirebaseConfig);
 const Db = getDatabase(AppClient);
 
-const bellControlsRef = ref(Db, 'settings/bellControls');
+const bellControlsRef = ref(Db, 'bell');
 
 export const updateBellControls = (data: Partial<BellControls>) => {
   return update(bellControlsRef, data);
+};
+
+export const ringBell = async (duration: number = 3000) => {
+  await update(bellControlsRef, { isRinging: true });
+  setTimeout(async () => {
+    await update(bellControlsRef, { isRinging: false });
+  }, duration);
 };
 
 export const onBellControlsChange = (callback: (data: BellControls) => void) => {
@@ -30,7 +37,7 @@ export const onBellControlsChange = (callback: (data: BellControls) => void) => 
     } else {
       // Si no existen datos en la ruta, proveer valores por defecto
       callback({
-        manualRing: 0,
+        isRinging: false,
         autoRingEnabled: true,
         isSilenced: false,
       });

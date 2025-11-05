@@ -17,7 +17,7 @@ export interface Schedule {
 }
 
 export interface BellControls {
-  manualRing: number;
+  isRinging: boolean;
   autoRingEnabled: boolean;
   isSilenced: boolean;
 }

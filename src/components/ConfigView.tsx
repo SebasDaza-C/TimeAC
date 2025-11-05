@@ -46,10 +46,13 @@ export function ConfigView({
   }, [LocalSchedules, SelectedScheduleId]);
 
   const handleRingBell = () => {
-    if (!bellControls || showRingFeedback) return;
-    updateBellControls({ manualRing: (bellControls.manualRing || 0) + 1 });
+    if (!bellControls || showRingFeedback || bellControls.isSilenced) return;
+    updateBellControls({ isRinging: true });
     setShowRingFeedback(true);
-    setTimeout(() => setShowRingFeedback(false), 1500);
+    setTimeout(() => {
+      updateBellControls({ isRinging: false });
+      setShowRingFeedback(false);
+    }, 3000);
   };
 
   const handleToggleAutoRing = () => {
