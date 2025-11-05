@@ -20,4 +20,5 @@ export interface BellControls {
   isRinging: boolean;
   autoRingEnabled: boolean;
   isSilenced: boolean;
+  manualRingDuration?: number; // Duración del timbre manual en segundos
 }

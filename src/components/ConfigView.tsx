@@ -48,11 +48,12 @@ export function ConfigView({
   const handleRingBell = () => {
     if (!bellControls || showRingFeedback || bellControls.isSilenced) return;
     updateBellControls({ isRinging: true });
+    const ringDuration = (bellControls?.manualRingDuration ?? 3) * 1000;
     setShowRingFeedback(true);
     setTimeout(() => {
       updateBellControls({ isRinging: false });
       setShowRingFeedback(false);
-    }, 3000);
+    }, ringDuration);
   };
 
   const handleToggleAutoRing = () => {
@@ -69,10 +70,16 @@ export function ConfigView({
     updateBellControls({ isSilenced: newBellControls.isSilenced });
   };
 
+  const handleDurationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const duration = Number(e.target.value);
+    if (!bellControls) return;
+    updateBellControls({ manualRingDuration: duration });
+  }
+
 
   const HandleScheduleTypeToggle = (TimeOfDay: 'Morning' | 'Afternoon') => {
     const NewType = LocalSettings[TimeOfDay] === 'Normal' ? 'Special' : 'Normal';
-    SetLocalSettings({ ...LocalSettings, [TimeOfDay]: NewType });
+    SetLocalSettings((prev) => ({ ...prev, [TimeOfDay]: NewType }));
   };
 
   const HandleScheduleStartTimeChange = (ScheduleId: number, NewStartTime: string) => {
@@ -213,6 +220,22 @@ export function ConfigView({
                 <span className="slider"></span>
               </label>
             </div>
+            <div className="config-controls">
+              <span>Duración Timbre Manual</span>
+              <select
+                value={bellControls?.manualRingDuration ?? 3}
+                onChange={handleDurationChange}
+                disabled={!bellControls}
+                className="duration-select"
+              >
+                {[...Array(10)].map((_, i) => {
+                  const value = i + 1;
+                  return (
+                    <option key={value} value={value}>{value} seg</option>
+                  )
+                })}
+              </select>
+            </div>
           </div>
         </div>
 
@@ -330,7 +353,7 @@ export function ConfigView({
         <div className="config-footer">
           <button onClick={OnCloseWithoutSaving} className="close-button">
             Cerrar sin guardar
-          </button>
+          </button> 
           <button
             onClick={() => OnSaveAndClose(LocalSchedules, LocalSettings)}
             className="save-button"
