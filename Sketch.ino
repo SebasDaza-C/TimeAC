@@ -25,14 +25,16 @@
 FirebaseData fbdoBell;
 FirebaseData fbdoAlias;
 FirebaseData fbdoTemp;
+FirebaseData fbdoConfig; // Para autoRingEnabled
 FirebaseAuth auth;
 FirebaseConfig config;
 
 // ====== Estado local ======
 bool lastIsRinging = false;
 bool hasLastIsRinging = false;
-char lastAliasChar = ' ';
+char lastAliasChar = ' '; // El último alias mostrado en el display
 bool hasLastAlias = false;
+bool autoRingEnabled = false; // Estado del timbre automático
 
 // ====== Mapeo de caracteres a segmentos ======
 struct SegmentPattern {
@@ -93,6 +95,7 @@ void inicializarFirebase() {
   fbdoBell.setResponseSize(1024);
   fbdoAlias.setResponseSize(1024);
   fbdoTemp.setResponseSize(1024);
+  fbdoConfig.setResponseSize(512); // Para el booleano de autoRingEnabled
 
   Serial.println("\n===== 🔍 LEYENDO VALORES INICIALES =====");
 
@@ -112,6 +115,14 @@ void inicializarFirebase() {
     Serial.printf("Alias actual inicial: %c\n", c);
     mostrarSegmentos(c);
     aplicarSegmentos(c);
+  }
+
+  // Leer configuración inicial de autoRingEnabled
+  if (Firebase.RTDB.getBool(&fbdoTemp, "/bell/autoRingEnabled")) {
+    autoRingEnabled = fbdoTemp.boolData();
+    Serial.printf("Timbre automático inicial: %s\n", autoRingEnabled ? "ACTIVADO" : "DESACTIVADO");
+  } else {
+    Serial.println("⚠️ No se pudo leer /bell/autoRingEnabled (usando 'false' por defecto)");
   }
 
   Serial.println("========================================\n");
@@ -151,8 +162,31 @@ void iniciarStreams() {
           Serial.printf("Nuevo currentAlias: %c\n", c);
           mostrarSegmentos(c);
           aplicarSegmentos(c);
+
+          // --- LÓGICA DEL TIMBRE AUTOMÁTICO ---
+          if (autoRingEnabled) {
+            Serial.println("🔔 Timbre automático activado -> Encendiendo LED.");
+            digitalWrite(LED_PIN, HIGH);
+            delay(500); // Duración del pulso del timbre
+            digitalWrite(LED_PIN, LOW);
+          }
+
           lastAliasChar = c;
           hasLastAlias = true;
+        }
+      },
+      nullptr
+    );
+  }
+
+  // === Stream de configuración autoRingEnabled ===
+  if (Firebase.RTDB.beginStream(&fbdoConfig, "/bell/autoRingEnabled")) {
+    Firebase.RTDB.setStreamCallback(
+      &fbdoConfig,
+      [](FirebaseStream data) {
+        if (data.dataTypeEnum() == fb_esp_rtdb_data_type_boolean) {
+          autoRingEnabled = data.boolData();
+          Serial.printf("\n=== ⚙️ Configuración de timbre automático cambiada a: %s ===\n", autoRingEnabled ? "ACTIVADO" : "DESACTIVADO");
         }
       },
       nullptr
@@ -165,14 +199,9 @@ void mostrarSegmentos(char c) {
   for (int i = 0; i < NUM_PATTERNS; i++) {
     if (patterns[i].character == c) {
       found = true;
-      Serial.printf("Segmentos para '%c':\n", c);
-      Serial.printf("a = %s\n", patterns[i].segments[0] ? "true" : "false");
-      Serial.printf("b = %s\n", patterns[i].segments[1] ? "true" : "false");
-      Serial.printf("c = %s\n", patterns[i].segments[2] ? "true" : "false");
-      Serial.printf("d = %s\n", patterns[i].segments[3] ? "true" : "false");
-      Serial.printf("e = %s\n", patterns[i].segments[4] ? "true" : "false");
-      Serial.printf("f = %s\n", patterns[i].segments[5] ? "true" : "false");
-      Serial.printf("g = %s\n", patterns[i].segments[6] ? "true" : "false");
+      // La impresión detallada de segmentos puede ser muy verbosa, la comentamos para limpiar la salida.
+      // Si necesitas depurar el display, puedes descomentar este bloque.
+      // Serial.printf("Mostrando segmentos para '%c'\n", c);
       break;
     }
   }
@@ -211,6 +240,8 @@ void reconectarStreams() {
     Firebase.RTDB.beginStream(&fbdoBell, "/bell/isRinging");
   if (!fbdoAlias.httpConnected())
     Firebase.RTDB.beginStream(&fbdoAlias, "/status/display/currentAlias");
+  if (!fbdoConfig.httpConnected())
+    Firebase.RTDB.beginStream(&fbdoConfig, "/bell/autoRingEnabled");
 }
 
 // ====== SETUP ======
