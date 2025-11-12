@@ -2,8 +2,8 @@
 #include <Firebase_ESP_Client.h>
 
 // ====== CONFIGURACIÓN Wi-Fi ======
-#define WIFI_SSID     "SD"
-#define WIFI_PASSWORD "1105371238"
+#define WIFI_SSID     "liliana"
+#define WIFI_PASSWORD "liliana1234"
 
 // ====== CONFIGURACIÓN Firebase ======
 #define API_KEY       "AIzaSyC4c1jjaxiZeGgJHQXnqN-1aLgG9nAVKTw"
@@ -247,7 +247,7 @@ void reconectarStreams() {
 // ====== SETUP ======
 void setup() {
   Serial.begin(115200);
-  delay(500);
+  delay(3000);
   Serial.println("\n===== 🔌 INICIANDO ESP32 =====");
 
   pinMode(LED_PIN, OUTPUT);
